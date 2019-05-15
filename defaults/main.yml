@@ -1,0 +1,3 @@
+---
+viptela_api_cookie_file: viptela_api_cookie
+validate_certs: no
