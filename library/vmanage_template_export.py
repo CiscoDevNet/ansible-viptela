@@ -46,7 +46,7 @@ def run_module():
 
     if not module.check_mode:
         with open(viptela.params['file'], 'w') as f:
-            json.dump(template_export, f)
+            json.dump(template_export, f, indent=4, sort_keys=True)
 
     viptela.exit_json(**viptela.result)
 

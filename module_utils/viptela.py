@@ -66,6 +66,31 @@ class viptelaModule(object):
             return fallback
         return value
 
+    @staticmethod
+    def list_to_dict(list, key_name, remove_key=True):
+        dict = {}
+        for item in list:
+            if remove_key:
+                key = item.pop(key_name)
+            else:
+                key = item[key_name]
+
+            dict[key] = item
+
+        return dict
+
+    @staticmethod
+    def compare_payloads(new_payload, old_payload, compare_values=[]):
+        payload_key_diff = []
+        for key, value in new_payload.items():
+            if key in compare_values:
+                if key not in old_payload:
+                    payload_key_diff.append(key)
+                elif new_payload[key] != old_payload[key]:
+                    payload_key_diff.append(key)
+        return payload_key_diff
+
+
     def login(self):
         try:
             response = self.session.post(
@@ -107,93 +132,118 @@ class viptelaModule(object):
             except JSONDecodeError as e:
                 self.fail_json(msg=self.status)
 
+        try:
+            response.json = response.json()
+        except JSONDecodeError as e:
+            response.json = {}
+
         return response
 
     def get_template_attachments(self, template_id):
         response = self.request('/dataservice/template/device/config/attached/{0}'.format(template_id))
 
-        device_list = response.json()
         attached_devices = []
-        for device in device_list['data']:
-            attached_devices.append(device['host-name'])
+        if response.json:
+            device_list = response.json['data']
+            for device in device_list:
+                attached_devices.append(device['host-name'])
 
         return attached_devices
 
-    def export_feature_templates(self, factory_default=False, key_name='templateName'):
-        response = self.request('/dataservice/template/feature')
 
-        template_list = response.json()
+    def get_device_template_list(self, factory_default=False):
+        response = self.request('/dataservice/template/device')
 
         return_list = []
-        for template in template_list['data']:
-            if not factory_default and template['factoryDefault']:
-                continue
-            template['templateDefinition'] = json.loads(template['templateDefinition'])
-            template['editedTemplateDefinition'] = json.loads(template['editedTemplateDefinition'])
-            return_list.append(template)
+        if response.json:
+
+            device_body = response.json
+            feature_template_dict = self.get_feature_template_dict(factory_default=True, key_name='templateId')
+
+            for device in device_body['data']:
+                object_response = self.request('/dataservice/template/device/object/{0}'.format(device['templateId']))
+                if object_response.json:
+                    object = object_response.json
+                    if not factory_default and object['factoryDefault']:
+                        continue
+
+                    if 'generalTemplates' in object:
+                        generalTemplates = []
+                        for old_template in object.pop('generalTemplates'):
+                            if 'subTemplates' in old_template:
+                                subTemplates = []
+                                for sub_template in old_template['subTemplates']:
+                                    subTemplates.append({'templateName':feature_template_dict[sub_template['templateId']]['templateName'], 'templateType':sub_template['templateType']})
+                                new_template = {'templateName': feature_template_dict[old_template['templateId']]['templateName'],
+                                                 'templateType': old_template['templateType'],
+                                                 'subTemplates': subTemplates}
+                            else:
+                                new_template = {'templateName': feature_template_dict[old_template['templateId']]['templateName'],
+                                                 'templateType': old_template['templateType']}
+                            generalTemplates.append(new_template)
+                        object['generalTemplates'] = generalTemplates
+
+                    object['templateId'] = device['templateId']
+                    object['attached_devices'] = self.get_template_attachments(device['templateId'])
+                    object['input'] = self.get_template_input(device['templateId'])
+
+                    return_list.append(object)
 
         return return_list
 
-    def export_device_templates(self, factory_default=False, key_name='templateName'):
-        device_response = self.request('/dataservice/template/device')
+    def get_device_template_dict(self, factory_default=False, key_name='templateName', remove_key=True):
+        device_template_list = self.get_device_template_list(factory_default=factory_default)
 
-        device_body = device_response.json()
+        return self.list_to_dict(device_template_list, key_name, remove_key)
 
-        feature_templates = self.get_feature_templates(factory_default=True, key_name='templateId')
+    def get_feature_template_list(self, factory_default=False):
+        response = self.request('/dataservice/template/feature')
 
         return_list = []
-        for device in device_body['data']:
-            object_response = self.request('/dataservice/template/device/object/{0}'.format(device['templateId']))
-            object = object_response.json()
-            if not factory_default and object['factoryDefault']:
-                continue
-
-            if 'generalTemplates' in object:
-                generalTemplates = []
-                for old_template in object.pop('generalTemplates'):
-                    if 'subTemplates' in old_template:
-                        subTemplates = []
-                        for sub_template in old_template['subTemplates']:
-                            subTemplates.append({'templateName':feature_templates[sub_template['templateId']]['templateName'], 'templateType':sub_template['templateType']})
-                        new_template = {'templateName': feature_templates[old_template['templateId']]['templateName'],
-                                         'templateType': old_template['templateType'],
-                                         'subTemplates': subTemplates}
-                    else:
-                        new_template = {'templateName': feature_templates[old_template['templateId']]['templateName'],
-                                         'templateType': old_template['templateType']}
-                    generalTemplates.append(new_template)
-                object['generalTemplates'] = generalTemplates
-
-            return_list.append(object)
+        if response.json:
+            template_list = response.json['data']
+            for template in template_list:
+                if not factory_default and template['factoryDefault']:
+                    continue
+                template['templateDefinition'] = json.loads(template['templateDefinition'])
+                template['editedTemplateDefinition'] = json.loads(template['editedTemplateDefinition'])
+                return_list.append(template)
 
         return return_list
 
-    def get_feature_templates(self, factory_default=False, key_name='templateName'):
-        response = self.request('/dataservice/template/feature')
+    def get_feature_template_dict(self, factory_default=False, key_name='templateName', remove_key=True):
+        feature_template_list = self.get_feature_template_list(factory_default=factory_default)
 
-        template_list = response.json()
+        return self.list_to_dict(feature_template_list, key_name, remove_key)
 
-        feature_templates = {}
-        for template in template_list['data']:
-            if not factory_default and template['factoryDefault']:
-                continue
-            key = template.pop(key_name)
-            feature_templates[key] = template
-            feature_templates[key]['templateDefinition'] = json.loads(template['templateDefinition'])
-            feature_templates[key]['editedTemplateDefinition'] = json.loads(template['editedTemplateDefinition'])
+    def get_policy_list_list(self, type):
+        response = self.request('/dataservice/template/policy/list/{0}'.format(type))
 
-        return feature_templates
+        return response.json
+
+    def get_vsmart_policy_list(self, type):
+        response = self.request('/dataservice/template/policy/vsmart')
+
+        response_json = response.json()
+
+        return response_json['data']
+
+    def get_policy_list_dict(self, type, key_name='name', remove_key=False):
+
+        policy_list = self.get_policy_list_list(type)
+
+        return self.list_to_dict(policy_list, key_name, remove_key=remove_key)
 
     def get_device_vedges(self, key_name='host-name'):
         response = self.request('/dataservice/system/device/vedges')
 
-        device_list = response.json()
-
         device_dict = {}
-        for device in device_list['data']:
-            if key_name in device:
-                key = device.pop(key_name)
-                device_dict[key] = device
+        if response.json:
+            device_list = response.json['data']
+            for device in device_list:
+                if key_name in device:
+                    key = device.pop(key_name)
+                    device_dict[key] = device
 
         return device_dict
 
@@ -236,44 +286,7 @@ class viptelaModule(object):
 
         return return_dict
 
-    def get_device_templates(self, factory_default=False, key_name='templateName'):
-        device_response = self.request('/dataservice/template/device')
 
-        device_body = device_response.json()
-
-        feature_templates = self.get_feature_templates(factory_default=True, key_name='templateId')
-
-        device_templates = {}
-        for device in device_body['data']:
-            object_response = self.request('/dataservice/template/device/object/{0}'.format(device['templateId']))
-            object = object_response.json()
-            if not factory_default and object['factoryDefault']:
-                continue
-
-            key = object.pop(key_name)
-            device_templates[key] = object
-
-            if 'generalTemplates' in object:
-                generalTemplates = []
-                for template in object.pop('generalTemplates'):
-                    if 'subTemplates' in template:
-                        subTemplates = []
-                        for sub_template in template['subTemplates']:
-                            subTemplates.append({'templateName':feature_templates[sub_template['templateId']]['templateName'], 'templateType':sub_template['templateType']})
-                        template_item = {'templateName': feature_templates[template['templateId']]['templateName'],
-                                         'templateType': template['templateType'],
-                                         'subTemplates': subTemplates}
-                    else:
-                        template_item = {'templateName': feature_templates[template['templateId']]['templateName'],
-                                         'templateType': template['templateType']}
-                    generalTemplates.append(template_item)
-
-                device_templates[key]['generalTemplates'] = generalTemplates
-                device_templates[key]['templateId'] = device['templateId']
-                device_templates[key]['attached_devices'] = self.get_template_attachments(device['templateId'])
-                device_templates[key]['input'] = self.get_template_input(device['templateId'])
-
-        return device_templates
 
     def exit_json(self, **kwargs):
         """Custom written method to exit from module."""

@@ -48,12 +48,17 @@ def run_module():
     device_data = devices[viptela.params['device']]
 
     if viptela.params['state'] == 'present':
+        if ('system-ip' not in device_data):
+            viptela.fail_json(msg='system-ip must be defined for {0}.'.format(viptela.params['device']))
+        if ('site-id' not in device_data):
+            viptela.fail_json(msg='site-id must be defined for {0}.'.format(viptela.params['device']))
+
         # Get template data and see if it is a real template
-        device_templates = viptela.get_device_templates(factory_default=True)
+        device_template_dict = viptela.get_device_template_dict(factory_default=True)
         if viptela.params['template']:
-            if viptela.params['template'] not in device_templates:
+            if viptela.params['template'] not in device_template_dict:
                 viptela.fail_json(msg='Template {0} not found.'.format(viptela.params['template']))
-            template_data = device_templates[viptela.params['template']]
+            template_data = device_template_dict[viptela.params['template']]
         else:
             viptela.fail_json(msg='Must specify a template with state present')
 
@@ -87,19 +92,19 @@ def run_module():
             }
             if not module.check_mode:
                 response = viptela.request('/dataservice/template/device/config/attachfeature', method='POST', data=json.dumps(payload))
-                post_response = response.json()
-                viptela.result['action_id'] = post_response['id']
+                if response.json:
+                    viptela.result['action_id'] = response.json['id']
 
-                # If told, wait for the status of the request and report it
-                if viptela.params['wait']:
-                    status = 'in_progress'
-                    while status == "in_progress":
-                        response = viptela.request('/dataservice/device/action/status/{0}'.format(post_response['id']))
-                        response_json = response.json()
-                        status = response_json['summary']['status']
-                        time.sleep(5)
-                    viptela.result['action_status'] = response_json['data'][0]['statusId']
-                    viptela.result['action_activity'] = response_json['data'][0]['currentActivity']
+                    # If told, wait for the status of the request and report it
+                    if viptela.params['wait']:
+                        status = 'in_progress'
+                        while status == "in_progress":
+                            response = viptela.request('/dataservice/device/action/status/{0}'.format(post_response['id']))
+                            if resonse.json:
+                                status = response.json['summary']['status']
+                                time.sleep(5)
+                            viptela.result['action_status'] = response_json['data'][0]['statusId']
+                            viptela.result['action_activity'] = response_json['data'][0]['currentActivity']
     else:
         if 'templateId' in device_data:
             viptela.result['changed'] = True

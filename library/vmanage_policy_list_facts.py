@@ -14,8 +14,6 @@ from ansible.module_utils.viptela import viptelaModule, viptela_argument_spec
 def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
-    argument_spec.update(factory_default=dict(type='bool', default=False),
-                         )
 
     # seed the result dict in the object
     # we primarily care about changed and state
@@ -24,8 +22,6 @@ def run_module():
     # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
-        original_message='',
-        message=''
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -37,29 +33,34 @@ def run_module():
                            )
     viptela = viptelaModule(module)
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    if module.check_mode:
-        return result
+    # vSmart policies
+    # response = viptela.request('/dataservice/template/policy/vsmart')
+    # response_json = response.json()
+    # vsmart_policies = response_json['data']
 
-    viptela.result['feature_templates'] = viptela.get_feature_templates(factory_default=viptela.params['factory_default'])
-    viptela.result['device_templates'] = viptela.get_device_templates(factory_default=viptela.params['factory_default'])
+    # Site lists
+    site_lists = viptela.get_policy_list_list('site')
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # FIXME: Work with viptela so they can implement a check mode
-    if module.check_mode:
-        viptela.exit_json(**viptela.result)
+    # Prefix lists
+    prefix_lists = viptela.get_policy_list_list('prefix')
 
-    # execute checks for argument completeness
+    # VPN lists
+    vpn_lists = viptela.get_policy_list_list('vpn')
 
-    # manipulate or modify the state as needed (this is going to be the
-    # part where your module will do what it needs to do)
+    policy_lists = {
+        # 'vsmart_policies': vsmart_policies,
+        'vmanage_site_lists': site_lists,
+        'vmanage_prefix_lists': prefix_lists,
+        'vmanage_vpn_lists': vpn_lists,
+    }
 
-    # in the event of a successful module execution, you will want to
-    # simple AnsibleModule.exit_json(), passing the key/value results
+    viptela.result['policy_lists'] = policy_lists
+
+    # if viptela.params['file']:
+    #     if not module.check_mode:
+    #         with open(viptela.params['file'], 'w') as f:
+    #             json.dump(policy_export, f, indent=4, sort_keys=True)
+
     viptela.exit_json(**viptela.result)
 
 def main():

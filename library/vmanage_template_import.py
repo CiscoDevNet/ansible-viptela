@@ -46,7 +46,7 @@ def run_module():
     device_template_data = template_data['device_templates']
 
     # Process the feature templates
-    feature_templates = viptela.get_feature_templates(factory_default=True)
+    feature_templates = viptela.get_feature_template_dict(factory_default=True)
     for data in feature_template_data:
         if data['templateName'] not in feature_templates:
             payload = {
@@ -65,8 +65,8 @@ def run_module():
             viptela.result['changed'] = True
 
     # Process the device templates
-    device_templates = viptela.get_device_templates()
-    feature_templates = viptela.get_feature_templates(factory_default=True)
+    device_templates = viptela.get_device_template_dict()
+    feature_templates = viptela.get_feature_template_dict(factory_default=True)
     for data in device_template_data:
         if data['templateName'] not in device_templates:
             payload = {

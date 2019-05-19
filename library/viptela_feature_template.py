@@ -44,7 +44,7 @@ def run_module():
     viptela = viptelaModule(module)
 
 
-    feature_templates = viptela.get_feature_templates(factory_default=True)
+    feature_templates = viptela.get_feature_template_dict(factory_default=True)
 
     if viptela.params['aggregate']:
         if viptela.params['state'] == 'present':

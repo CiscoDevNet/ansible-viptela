@@ -6,7 +6,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-import time
+import requests
 from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.viptela import viptelaModule, viptela_argument_spec
 
@@ -14,8 +14,8 @@ from ansible.module_utils.viptela import viptelaModule, viptela_argument_spec
 def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
-    argument_spec.update(id = dict(type='str', required=True),
-    )
+    argument_spec.update(factory_default=dict(type='bool', default=False),
+                         )
 
     # seed the result dict in the object
     # we primarily care about changed and state
@@ -24,6 +24,8 @@ def run_module():
     # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
+        original_message='',
+        message=''
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -35,9 +37,21 @@ def run_module():
                            )
     viptela = viptelaModule(module)
 
-    response = viptela.request('/dataservice/device/action/status/{0}'.format(viptela.params['id']))
-    viptela.result['response'] = response.json()
+    # if the user is working with this module in only check mode we do not
+    # want to make any changes to the environment, just return the current
+    # state with no modifications
+    if module.check_mode:
+        return result
 
+    feature_templates = viptela.get_feature_template_list(factory_default=viptela.params['factory_default'])
+    device_templates = viptela.get_device_template_list(factory_default=viptela.params['factory_default'])
+
+    templates = {
+        "feature_templates": feature_templates,
+        "device_templates": device_templates,
+    }
+
+    viptela.result['templates'] = templates
     viptela.exit_json(**viptela.result)
 
 def main():

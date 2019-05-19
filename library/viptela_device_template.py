@@ -49,7 +49,7 @@ def run_module():
     if module.check_mode:
         return result
 
-    feature_templates = viptela.get_feature_templates(factory_default=True)
+    feature_templates = viptela.get_feature_template_dict(factory_default=True)
     device_templates = viptela.get_device_templates()
 
     if viptela.params['aggregate']:
