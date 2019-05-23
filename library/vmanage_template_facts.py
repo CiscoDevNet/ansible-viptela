@@ -51,6 +51,8 @@ def run_module():
         "device_templates": device_templates,
     }
 
+    viptela.logout()
+
     viptela.result['templates'] = templates
     viptela.exit_json(**viptela.result)
 

@@ -37,8 +37,8 @@ def run_module():
                            )
     viptela = viptelaModule(module)
 
-    viptela.result['vedges'] = viptela.get_device_vedges()
-    viptela.result['controllers'] = viptela.get_device_controllers()
+    viptela.result['vedges'] = viptela.get_device_list('vedges')
+    viptela.result['controllers'] = viptela.get_device_list('controllers')
 
     viptela.exit_json(**viptela.result)
 

@@ -47,10 +47,8 @@ def run_module():
                                    data={'validity':'valid', 'upload':'true'},
                                    headers=None)
 
-        json = response.json()
-        viptela.result['json'] = json
-        viptela.result['msg'] = json['vedgeListUploadStatus']
-        if 'successfully' in json['vedgeListUploadStatus']:
+        viptela.result['msg'] = response.json['vedgeListUploadStatus']
+        if 'successfully' in response.json['vedgeListUploadStatus']:
             viptela.result['changed'] = True
 
     viptela.exit_json()

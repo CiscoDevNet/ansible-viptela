@@ -13,65 +13,176 @@ This role can perform the following functions:
 - Install Serial File
 - Export Templates
 - Import Templates
+- Add/Change/Delete Templates
 - Attach Templates
+- Export Policy
+- Import Policy
+- Add/Change/Delete Policy
+- Activate Policy
 - Get Template facts
 - Get Device facts
 
-## Modules
-
-### Export device and feature templates:
+### Get Device Template Facts
 ```yaml
-- viptela_template_export:
+- vmanage_device_template_facts:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
     password: "{{ ansible_password }}"
     factory_default: no
-    file: "{{ file }}"
 ```
 
-### Import device and feature templates:
+### Feature Template Facts:
 ```yaml
-- viptela_template_import:
-    host: "{{ vmanage_ip }}"
+- vmanage_feature_template_facts:
     user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
     password: "{{ ansible_password }}"
-    file: "{{ file }}"
+    factory_default: no
+```
+
+### Feature templates operations
+```
+- vmanage_feature_template:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+    state: present
+    aggregate: "{{ vmanage_templates.feature_templates }}"
+```
+
+### Device template operations
+```
+- vmanage_device_template:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+    state: present
+    aggregate: "{{ vmanage_templates.device_templates }}"
 ```
 
 ### Attach template to device:
 ```yaml
-- viptela_device_attachment:
+- vmanage_device_attachment:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
     password: "{{ ansible_password }}"
-    device: "{{ inventory_hostname }}"
-    template: "{{ viptela.template.name }}"
-    variables: "{{ viptela.template.variables | default(omit) }}"
-    wait: no
+    device: site1-vedge1
+    template: colo_vedge
+    variables: 
+      vpn11_ipv4_address: 172.22.2.1/24
+      vpn10_ipv4_address: 172.22.1.1/24
+      vpn0_internet_ipv4_address: 172.16.22.2/24
+      vpn0_default_gateway: 172.16.22.1
+    wait: yes
     state: "{{ state }}"
+```
+
+### Policy List Facts:
+```
+- vmanage_policy_list_facts:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+  register: policy_list_facts
+```
+
+### Policy Definition Facts:
+```
+- vmanage_policy_definition_facts:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+  register: policy_definition_facts
+```
+
+### Import policy lists
+```
+- vmanage_policy_list:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+    type: "{{ item.key }}"
+    state: present
+    aggregate: "{{ item.value }}"
+```
+
+### Import policy definitions
+```
+- vmanage_policy_definition:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+    type: "{{ item.key }}"
+    state: present
+    aggregate: "{{ item.value }}"
+```
+
+### Import central policies
+```
+- vmanage_central_policy:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+    state: present
+    aggregate: "{{ vmanage_policy.vmanage_central_policies }}"
+```
+
+### Central Policy Facts:
+```
+- vmanage_central_policy_facts:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+  register: central_policy_facts
+```
+
+### Add Central Policy
+```
+- vmanage_central_policy:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+    state: present
+    aggregate: "{{ vmanage_central_policy.central_policy }}"
+  register: policy_facts
+```
+
+### Activate Central Policy
+```
+- vmanage_central_policy:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+    state: activated
+    name: central_policy
+    wait: yes
+    aggregate: "{{ vmanage_central_policy.central_policy }}"
+  register: policy_facts
+```
+### Activate Central Policy
+```
+- vmanage_central_policy:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+    state: activated
+    wait: yes
+    aggregate: "{{ vmanage_central_policy.central_policy }}"
+  register: policy_facts
 ```
 
 ### Get status of a device action:
 ```yaml
-- viptela_device_action_status:
+- vmanange_device_action_status:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
     password: "{{ ansible_password }}"
     id: "{{ attachment_results.action_id }}"
 ```
 
-### Get template facts:
-```yaml
-- viptela_template_facts:
-    user: "{{ ansible_user }}"
-    host: "{{ ansible_host }}"
-    password: "{{ ansible_password }}"
-    factory_default: no
-```
-
 ### Get device facts:
 ```yaml
-- viptela_device_facts:
+- vmanage_device_facts:
     user: "{{ ansible_user }}"
     host: "{{ ansible_host }}"
     password: "{{ ansible_password }}"
@@ -79,12 +190,14 @@ This role can perform the following functions:
 
 ### Upload serial number file:
 ```yaml
-- viptela_fileupload:
+- vmanage_fileupload:
     host: "{{ vmanage_ip }}"
     user: "{{ ansible_user }}"
     password: "{{ ansible_password }}"
     file: 'licenses/serialFile.viptela'
 ```
+
+
 
 ## Role Tasks
 

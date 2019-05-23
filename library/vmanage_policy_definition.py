@@ -18,10 +18,11 @@ def run_module():
                          aggregate=dict(type='list'),
                          name=dict(type='str'),
                          description = dict(type = 'str'),
-                         type = dict(type ='str', required = True, choices= ['color', 'vpn', 'site', 'app',
-                            'dataprefix', 'prefix', 'aspath', 'class', 'community', 'extcommunity', 'mirror', 'tloc',
-                            'sla', 'policer', 'ipprefixall', 'dataprefixall']),
-                         entries = dict(type ='list'),
+                         type = dict(type ='str', required = True, choices= ['cflowd', 'dnssecurity', 'control',
+                                'hubandspoke', 'acl', 'vpnmembershipgroup', 'mesh', 'rewriterule', 'data',
+                                'rewriterule', 'aclv6']),
+                         sequences = dict(type ='list'),
+                         default_action = dict(type ='dict', alias='defaultAction'),
     )
 
     # seed the result dict in the object
@@ -44,41 +45,51 @@ def run_module():
 
     # Always as an aggregate... make a list if just given a single entry
     if viptela.params['aggregate']:
-        policy_list =  viptela.params['aggregate']
+        definition_list =  viptela.params['aggregate']
     else:
-        policy_list = [
+        definition_list = [
             {
                 "name": viptela.params['name'],
                 "description": viptela.params['description'],
                 "type": viptela.params['type'],
-                "entries": viptela.params['entries'],
+                "sequences": viptela.params['sequences'],
+                "defaultAction": viptela.params['default_action']
             }
         ]
 
-    policy_list_dict = viptela.get_policy_list_dict(viptela.params['type'], remove_key=False)
+    policy_definition_dict = viptela.get_policy_definition_dict(viptela.params['type'], remove_key=False)
 
-    compare_values = ["name", "description", "type", "entries"]
+    compare_values = ["name", "description", "type", "sequences", "defaultAction"]
 
     # Import site lists
-    for list in policy_list:
+    for list in definition_list:
+        payload = {
+            "name": list['name'],
+            "description": list['description'],
+            "type": list['type'],
+            "sequences": list['sequences'],
+            "defaultAction": list['defaultAction']
+        }
         if viptela.params['state'] == 'present':
-            if list['name'] in policy_list_dict:
-                changed_items = viptela.compare_payloads(list, policy_list_dict[list['name']], compare_values=compare_values)
+            if list['name'] in policy_definition_dict:
+                changed_items = viptela.compare_payloads(list, policy_definition_dict[list['name']], compare_values=compare_values)
                 if changed_items:
                     viptela.result['changed'] = True
                     viptela.result['what_changed'] = changed_items
+                    payload['sequences'] = viptela.convert_sequences_to_id(list['sequences'])
                     if not module.check_mode:
-                        viptela.request('/dataservice/template/policy/list/{0}/{1}'.format(list['type'].lower(), policy_list_dict[list['name']]['listId']),
-                                        method='PUT', payload=list)
+                        viptela.request('/dataservice/template/policy/definition/{0}/{1}'.format(list['type'], policy_definition_dict[list['name']]['definitionId']),
+                                        method='PUT', payload=payload)
             else:
+                payload['sequences'] = viptela.convert_sequences_to_id(list['sequences'])
                 if not module.check_mode:
-                    viptela.request('/dataservice/template/policy/list/{0}/'.format(list['type'].lower()),
-                                    method='POST', payload=list)
+                    viptela.request('/dataservice/template/policy/definition/{0}/'.format(list['type']),
+                                    method='POST', payload=payload)
                 viptela.result['changed'] = True
         else:
-            if list['name'] in policy_list_dict:
+            if list['name'] in policy_definition_dict:
                 if not module.check_mode:
-                    viptela.request('/dataservice/template/policy/list/{0}/{1}'.format(list['type'].lower(), list['listId']),
+                    viptela.request('/dataservice/template/policy/definition/{0}/{1}'.format(list['type'], list['definitionId']),
                                     method='DELETE')
                 viptela.result['changed'] = True
 

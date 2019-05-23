@@ -36,8 +36,8 @@ def run_module():
                            )
     viptela = viptelaModule(module)
 
-    feature_template_export = viptela.export_feature_templates(factory_default=viptela.params['factory_default'])
-    device_template_export = viptela.export_device_templates(factory_default=viptela.params['factory_default'])
+    feature_template_export = viptela.get_feature_template_list(factory_default=viptela.params['factory_default'])
+    device_template_export = viptela.get_device_template_list(factory_default=viptela.params['factory_default'])
 
     template_export = {
         'feature_templates': feature_template_export,

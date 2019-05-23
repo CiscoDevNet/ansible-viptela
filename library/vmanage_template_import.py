@@ -66,66 +66,41 @@ def run_module():
 
     # Process the device templates
     device_templates = viptela.get_device_template_dict()
-    feature_templates = viptela.get_feature_template_dict(factory_default=True)
-    for data in device_template_data:
-        if data['templateName'] not in device_templates:
+    for device_template in device_template_data:
+        if device_template['templateName'] not in device_templates:
             payload = {
-                'templateName': data['templateName'],
-                'templateDescription': data['templateDescription'],
-                'deviceType': data['deviceType'],
-                'factoryDefault': data['factoryDefault'],
-                'configType': data['configType']
+                'templateName': device_template['templateName'],
+                'templateDescription': device_template['templateDescription'],
+                'deviceType': device_template['deviceType'],
+                'factoryDefault': device_template['factoryDefault'],
+                'configType': device_template['configType']
             }
 
             #
             # File templates are much easier in that they are just a bunch of CLI
             #
-            if data['configType'] == 'file':
-                payload['templateConfiguration'] = data['templateConfiguration']
+            if device_template['configType'] == 'file':
+                payload['templateConfiguration'] = device_template['templateConfiguration']
                 if not module.check_mode:
-                    viptela.request('/dataservice/template/device/cli', method='POST', data=json.dumps(payload))
+                    viptela.request('/dataservice/template/device/cli', method='POST', payload=payload)
             #
             # Feature based templates are just a list of templates Id that make up a devie template.  We are
             # given the name of the feature templates, but we need to translate that to the template ID
             #
             else:
-                if 'generalTemplates' not in data:
-                    viptela.fail_json(msg="No generalTemplates found in device template", data=data)
-                generalTemplates = []
-                for template in data['generalTemplates']:
-                    if template['templateName'] in feature_templates:
-                        if 'subTemplates' in template:
-                            subTemplates = []
-                            for sub_template in template['subTemplates']:
-                                if sub_template['templateName'] in feature_templates:
-                                    subTemplates.append(
-                                            {'templateId': feature_templates[sub_template['templateName']]['templateId'],
-                                             'templateType': sub_template['templateType']})
-                                else:
-                                    viptela.fail_json(msg="There is no existing feature template named {0}".format(
-                                        sub_template['templateName']))
-                            template_item = {
-                                'templateId': feature_templates[template['templateName']]['templateId'],
-                                'templateType': template['templateType'],
-                                'subTemplates': subTemplates}
-                        else:
-                            template_item = {
-                                'templateId': feature_templates[template['templateName']]['templateId'],
-                                'templateType': template['templateType']}
-                        generalTemplates.append(template_item)
-                    else:
-                        viptela.fail_json(msg="There is no existing feature template named {0}".format(template['templateName']))
-
-                payload['generalTemplates'] = generalTemplates
+                if 'generalTemplates' in device_template:
+                    payload['generalTemplates'] = viptela.generalTemplates_to_id(device_template['generalTemplates'])
+                else:
+                    viptela.fail_json(msg="No generalTemplates found in device template", data=device_template)
                 payload['policyId'] = ''
-                if 'connectionPreference' in data:
-                    payload['connectionPreference'] = data['connectionPreference']
-                if 'connectionPreferenceRequired' in data:
-                    payload['connectionPreferenceRequired'] = data['connectionPreferenceRequired']
+                if 'connectionPreference' in device_template:
+                    payload['connectionPreference'] = device_template['connectionPreference']
+                if 'connectionPreferenceRequired' in device_template:
+                    payload['connectionPreferenceRequired'] = device_template['connectionPreferenceRequired']
                 payload['featureTemplateUidRange'] = []
                 # Don't make the actual POST if we are in check mode
                 if not module.check_mode:
-                    viptela.request('/dataservice/template/device/feature', method='POST', data=json.dumps(payload))
+                    viptela.request('/dataservice/template/device/feature', method='POST', payload=payload)
                 viptela.result['changed'] = True
 
     viptela.exit_json(**viptela.result)

@@ -14,6 +14,8 @@ from ansible.module_utils.viptela import viptelaModule, viptela_argument_spec
 def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
+    argument_spec.update(factory_default=dict(type='bool', default=False),
+                         )
 
     # seed the result dict in the object
     # we primarily care about changed and state
@@ -22,6 +24,8 @@ def run_module():
     # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
+        original_message='',
+        message=''
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -33,29 +37,7 @@ def run_module():
                            )
     viptela = viptelaModule(module)
 
-    # vSmart policies
-    # response = viptela.request('/dataservice/template/policy/vsmart')
-    # response_json = response.json()
-    # vsmart_policies = response_json['data']
-    policy_lists = {}
-    for list_type in viptela.POLICY_LIST_TYPES:
-        list = viptela.get_policy_list_list(list_type)
-        policy_lists[list_type] = list
-
-    # # Prefix lists
-    # prefix_lists = viptela.get_policy_list_list('prefix')
-    #
-    # # VPN lists
-    # vpn_lists = viptela.get_policy_list_list('vpn')
-    #
-    # policy_lists = {
-    #     # 'vsmart_policies': vsmart_policies,
-    #     'vmanage_site_lists': site_lists,
-    #     'vmanage_prefix_lists': prefix_lists,
-    #     'vmanage_vpn_lists': vpn_lists,
-    # }
-
-    viptela.result['policy_lists'] = policy_lists
+    viptela.result['feature_templates'] = viptela.get_feature_template_list(factory_default=viptela.params['factory_default'])
 
     viptela.exit_json(**viptela.result)
 

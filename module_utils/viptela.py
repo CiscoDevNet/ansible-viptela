@@ -2,9 +2,10 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 import json
 import requests
+import re
+import time
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native, to_bytes, to_text
+
 
 try:
     from json.decoder import JSONDecodeError
@@ -21,6 +22,10 @@ def viptela_argument_spec():
 
 STANDARD_HTTP_TIMEOUT = 10
 STANDARD_JSON_HEADER = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
+POLICY_LIST_DICT = {
+    'siteLists': 'site',
+    'vpnLists': 'vpn',
+}
 
 class viptelaModule(object):
 
@@ -33,17 +38,6 @@ class viptelaModule(object):
         self.cookies = None
         self.json = None
 
-        # normal output
-        self.existing = None
-
-        # info output
-        self.config = dict()
-        self.original = None
-        self.proposed = dict()
-        self.merged = None
-
-        # debug output
-        self.filter_string = ''
         self.method = None
         self.path = None
         self.response = None
@@ -59,23 +53,36 @@ class viptelaModule(object):
         self.session = requests.Session()
         self.session.verify = self.params['validate_certs']
 
+        self.POLICY_DEFINITION_TYPES = ['cflowd', 'dnssecurity', 'control', 'hubandspoke', 'acl', 'vpnmembershipgroup',
+                                        'mesh', 'rewriterule', 'data', 'rewriterule', 'aclv6']
+        self.POLICY_LIST_TYPES = ['community', 'localdomain', 'ipv6prefix', 'dataipv6prefix', 'tloc', 'aspath', 'zone',
+                                  'color', 'sla', 'app', 'mirror', 'dataprefix', 'extcommunity', 'site', 'ipprefixall',
+                                  'prefix', 'umbrelladata', 'class', 'ipssignature', 'dataprefixall',
+                                  'urlblacklist', 'policer', 'urlwhitelist', 'vpn']
+
         self.login()
+
+    # Deleting (Calling destructor)
+    def __del__(self):
+        self.logout()
 
     def _fallback(self, value, fallback):
         if value is None:
             return fallback
         return value
 
-    @staticmethod
-    def list_to_dict(list, key_name, remove_key=True):
+    def list_to_dict(self, list, key_name, remove_key=True):
         dict = {}
         for item in list:
-            if remove_key:
-                key = item.pop(key_name)
-            else:
-                key = item[key_name]
+            if key_name in item:
+                if remove_key:
+                    key = item.pop(key_name)
+                else:
+                    key = item[key_name]
 
-            dict[key] = item
+                dict[key] = item
+            # else:
+            #     self.fail_json(msg="key {0} not found in dictionary".format(key_name))
 
         return dict
 
@@ -107,21 +114,25 @@ class viptelaModule(object):
         else:
             return response
 
-    def request(self, url_path, method='GET', headers=STANDARD_JSON_HEADER, data=None, files=None):
+    def logout(self):
+        self.request('/logout')
+
+    def request(self, url_path, method='GET', headers=STANDARD_JSON_HEADER, data=None, files=None, payload=None):
         """Generic HTTP method for viptela requests."""
 
         self.method = method
         self.headers = headers
         self.url = 'https://{0}{1}'.format(self.host, url_path)
 
+        if payload:
+            self.result['payload'] = payload
+            data = json.dumps(payload)
+            self.result['data'] = data
+
         response = self.session.request(method, self.url, headers=headers, files=files, data=data)
 
         self.status_code = response.status_code
         self.status = requests.status_codes._codes[response.status_code][0]
-
-        # Timeout the session so that we can unlock whatever we did
-        if method in ['PUT', 'POST']:
-            self.session.request('GET', 'https://{0}/dataservice/settings/clientSessionTimeout'.format(self.host))
 
         if self.status_code >= 300 or self.status_code < 0:
             try:
@@ -150,6 +161,46 @@ class viptelaModule(object):
 
         return attached_devices
 
+    def generalTemplates_to_id(self, generalTemplates):
+        converted_generalTemplates = []
+        feature_templates = self.get_feature_template_dict(factory_default=True)
+        for template in generalTemplates:
+            if 'templateName' not in template:
+                self.result['generalTemplates'] = generalTemplates
+                self.fail_json(msg="Bad template")
+            if template['templateName'] in feature_templates:
+                template_item = {
+                    'templateId': feature_templates[template['templateName']]['templateId'],
+                    'templateType': template['templateType']}
+                if 'subTemplates' in template:
+                    subTemplates = []
+                    for sub_template in template['subTemplates']:
+                        if sub_template['templateName'] in feature_templates:
+                            subTemplates.append(
+                                {'templateId': feature_templates[sub_template['templateName']]['templateId'],
+                                 'templateType': sub_template['templateType']})
+                        else:
+                            self.fail_json(msg="There is no existing feature template named {0}".format(
+                                sub_template['templateName']))
+                    template_item['subTemplates'] = subTemplates
+
+                converted_generalTemplates.append(template_item)
+            else:
+                self.fail_json(msg="There is no existing feature template named {0}".format(template['templateName']))
+
+        return converted_generalTemplates
+
+    def convert_sequences_to_id(self, sequence_list):
+        for sequence in sequence_list:
+            for entry in sequence['match']['entries']:
+                policy_list_dict = self.get_policy_list_dict(entry['listType'])
+                if entry['listName'] in policy_list_dict:
+                    entry['ref'] = policy_list_dict[entry['listName']]['listId']
+                    entry.pop('listName')
+                    entry.pop('listType')
+                else:
+                    self.fail_json(msg="Could not find list {0} of type {1}".format(entry['listName'], entry['listType']))
+        return sequence_list
 
     def get_device_template_list(self, factory_default=False):
         response = self.request('/dataservice/template/device')
@@ -170,16 +221,15 @@ class viptelaModule(object):
                     if 'generalTemplates' in object:
                         generalTemplates = []
                         for old_template in object.pop('generalTemplates'):
+                            new_template = {
+                                'templateName': feature_template_dict[old_template['templateId']]['templateName'],
+                                'templateType': old_template['templateType']}
                             if 'subTemplates' in old_template:
                                 subTemplates = []
                                 for sub_template in old_template['subTemplates']:
                                     subTemplates.append({'templateName':feature_template_dict[sub_template['templateId']]['templateName'], 'templateType':sub_template['templateType']})
-                                new_template = {'templateName': feature_template_dict[old_template['templateId']]['templateName'],
-                                                 'templateType': old_template['templateType'],
-                                                 'subTemplates': subTemplates}
-                            else:
-                                new_template = {'templateName': feature_template_dict[old_template['templateId']]['templateName'],
-                                                 'templateType': old_template['templateType']}
+                                new_template['subTemplates'] = subTemplates
+
                             generalTemplates.append(new_template)
                         object['generalTemplates'] = generalTemplates
 
@@ -206,7 +256,7 @@ class viptelaModule(object):
                 if not factory_default and template['factoryDefault']:
                     continue
                 template['templateDefinition'] = json.loads(template['templateDefinition'])
-                template['editedTemplateDefinition'] = json.loads(template['editedTemplateDefinition'])
+                template.pop('editedTemplateDefinition', None)
                 return_list.append(template)
 
         return return_list
@@ -216,17 +266,17 @@ class viptelaModule(object):
 
         return self.list_to_dict(feature_template_list, key_name, remove_key)
 
-    def get_policy_list_list(self, type):
-        response = self.request('/dataservice/template/policy/list/{0}'.format(type))
-
+    def get_policy_list(self, type, list_id):
+        response = self.request('/dataservice/template/policy/list/{0}/{1}'.format(type.lower(), list_id))
         return response.json
 
-    def get_vsmart_policy_list(self, type):
-        response = self.request('/dataservice/template/policy/vsmart')
+    def get_policy_list_list(self, type):
+        if type == 'all':
+            response = self.request('/dataservice/template/policy/list')
+        else:
+            response = self.request('/dataservice/template/policy/list/{0}'.format(type.lower()))
 
-        response_json = response.json()
-
-        return response_json['data']
+        return response.json['data']
 
     def get_policy_list_dict(self, type, key_name='name', remove_key=False):
 
@@ -234,31 +284,82 @@ class viptelaModule(object):
 
         return self.list_to_dict(policy_list, key_name, remove_key=remove_key)
 
-    def get_device_vedges(self, key_name='host-name'):
+    def get_policy_definition(self, type, definition_id):
+        response = self.request('/dataservice/template/policy/definition/{0}/{1}'.format(type, definition_id))
+        return response.json
+
+    def get_policy_definition_list(self, type):
+        response = self.request('/dataservice/template/policy/definition/{0}'.format(type))
+
+        return response.json['data']
+
+    def get_policy_definition_dict(self, type, key_name='name', remove_key=False):
+
+        policy_definition_list = self.get_policy_definition_list(type)
+
+        return self.list_to_dict(policy_definition_list, key_name, remove_key=remove_key)
+
+    def get_central_policy_list(self):
+        response = self.request('/dataservice/template/policy/vsmart')
+        if response.json:
+            central_policy_list = response.json['data']
+            for policy in central_policy_list:
+                policy['policyDefinition'] = json.loads(policy['policyDefinition'])
+                for item in policy['policyDefinition']['assembly']:
+                    policy_definition = self.get_policy_definition(item['type'], item['definitionId'])
+                    item['definitionName'] = policy_definition['name']
+                    for entry in item['entries']:
+                        for key, list in entry.items():
+                            if key in POLICY_LIST_DICT:
+                                for index, list_id in enumerate(list):
+                                    policy_list = self.get_policy_list(POLICY_LIST_DICT[key], list_id)
+                                    list[index] = policy_list['name']
+            #     if 'policyDefinition' in policy:
+            #         for old_template in policy.pop('policyDefinition'):
+            #
+
+            return central_policy_list
+        else:
+            return []
+
+    def get_central_policy_dict(self, key_name='policyName', remove_key=False):
+
+        central_policy_list = self.get_central_policy_list()
+
+        return self.list_to_dict(central_policy_list, key_name, remove_key=remove_key)
+
+
+
+    def get_device_list(self, type, key_name='host-name', remove_key=True):
+        response = self.request('/dataservice/system/device/{0}'.format(type))
+
+        if response.json:
+            return response.json['data']
+        else:
+            return []
+
+    def get_device_dict(self, type, key_name='host-name', remove_key=False):
+
+        device_list = self.get_device_list(type)
+
+        return self.list_to_dict(device_list, key_name=key_name, remove_key=remove_key)
+
+    def get_device_vedges(self, key_name='host-name', remove_key=True):
         response = self.request('/dataservice/system/device/vedges')
 
-        device_dict = {}
         if response.json:
-            device_list = response.json['data']
-            for device in device_list:
-                if key_name in device:
-                    key = device.pop(key_name)
-                    device_dict[key] = device
+            return self.list_to_dict(response.json['data'], key_name=key_name, remove_key=remove_key)
+        else:
+            return {}
 
-        return device_dict
 
-    def get_device_controllers(self, key_name='host-name'):
+    def get_device_controllers(self, key_name='host-name', remove_key=True):
         response = self.request('/dataservice/system/device/controllers')
 
-        device_list = response.json()
-
-        device_dict = {}
-        for device in device_list['data']:
-            if key_name in device:
-                key = device.pop(key_name)
-                device_dict[key] = device
-
-        return device_dict
+        if response.json:
+            return self.list_to_dict(response.json['data'], key_name=key_name, remove_key=remove_key)
+        else:
+            return {}
 
     def get_template_input(self, template_id):
         payload = {
@@ -270,23 +371,76 @@ class viptelaModule(object):
         return_dict = {
             "columns": [],
         }
-        response = self.request('/dataservice/template/device/config/input', method='POST', data=json.dumps(payload))
+        response = self.request('/dataservice/template/device/config/input', method='POST', payload=payload)
 
-        try:
-            template_input = response.json()
-            column_list = template_input['header']['columns']
-        except:
-            return return_dict
+        if response.json:
+            if 'header' in response.json and 'columns' in response.json['header']:
+                column_list = response.json['header']['columns']
 
-        for column in column_list:
-            if column['editable']:
-                entry = {'title': column['title'],
-                         'property': column['property']}
-                return_dict['columns'].append(entry)
+                regex = re.compile(r'\((?P<variable>[^(]+)\)')
+
+                for column in column_list:
+                    if column['editable']:
+                        match = regex.search(column['title'])
+                        if match:
+                            variable = match.groups('variable')[0]
+                        else:
+                            variable = None
+
+                        entry = {'title': column['title'],
+                                 'property': column['property'],
+                                 'variable': variable}
+                        return_dict['columns'].append(entry)
 
         return return_dict
 
+    def get_template_variables(self, template_id):
+        payload = {
+            "deviceIds": [],
+            "isEdited": False,
+            "isMasterEdited": False,
+            "templateId": template_id
+        }
+        return_dict = {}
+        response = self.request('/dataservice/template/device/config/input', method='POST', payload=payload)
 
+        if response.json:
+            if 'header' in response.json and 'columns' in response.json['header']:
+                column_list = response.json['header']['columns']
+
+                regex = re.compile(r'\((?P<variable>[^(]+)\)')
+
+                for column in column_list:
+                    if column['editable']:
+                        match = regex.search(column['title'])
+                        if match:
+                            variable = match.groups('variable')[0]
+                            return_dict[variable] = column['property']
+
+        return return_dict
+
+    def waitfor_action_completion(self, action_id):
+        status = 'in_progress'
+        response = {}
+        while status == "in_progress":
+            response = self.request('/dataservice/device/action/status/{0}'.format(action_id))
+            if response.json:
+                status = response.json['summary']['status']
+                if response.json['data']:
+                    action_status = response.json['data'][0]['statusId']
+                    action_activity = response.json['data'][0]['activity']
+                    action_config = response.json['data'][0]['actionConfig']
+            else:
+                self.fail_json(msg="Unable to get action status")
+            time.sleep(5)
+
+        self.result['action_id'] = action_id
+        self.result['action_status'] = action_status
+        self.result['action_activity'] = action_activity
+        self.result['action_config'] = action_config
+        if self.result['action_status'] == 'failure':
+            self.fail_json(msg="Action failed")
+        return response
 
     def exit_json(self, **kwargs):
         """Custom written method to exit from module."""

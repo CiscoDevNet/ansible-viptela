@@ -33,29 +33,7 @@ def run_module():
                            )
     viptela = viptelaModule(module)
 
-    # vSmart policies
-    # response = viptela.request('/dataservice/template/policy/vsmart')
-    # response_json = response.json()
-    # vsmart_policies = response_json['data']
-    policy_lists = {}
-    for list_type in viptela.POLICY_LIST_TYPES:
-        list = viptela.get_policy_list_list(list_type)
-        policy_lists[list_type] = list
-
-    # # Prefix lists
-    # prefix_lists = viptela.get_policy_list_list('prefix')
-    #
-    # # VPN lists
-    # vpn_lists = viptela.get_policy_list_list('vpn')
-    #
-    # policy_lists = {
-    #     # 'vsmart_policies': vsmart_policies,
-    #     'vmanage_site_lists': site_lists,
-    #     'vmanage_prefix_lists': prefix_lists,
-    #     'vmanage_vpn_lists': vpn_lists,
-    # }
-
-    viptela.result['policy_lists'] = policy_lists
+    viptela.result['central_policies'] = viptela.get_central_policy_list()
 
     viptela.exit_json(**viptela.result)
 
