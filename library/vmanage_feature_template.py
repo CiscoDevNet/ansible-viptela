@@ -6,24 +6,24 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-import os
 from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.viptela import viptelaModule, viptela_argument_spec
-
+from collections import OrderedDict
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
-                         name = dict(type='str', alias='templateName'),
-                         description = dict(type='str', alias='templateDescription'),
-                         definition = dict(type='str', alias='templateDefinition'),
-                         type = dict(type='str', alias='templateType'),
-                         device_type = dict(type='list', alias='deviceType'),
-                         template_min_version = dict(type='str', alias='templateMinVersion'),
+                         name=dict(type='str', alias='templateName'),
+                         description=dict(type='str', alias='templateDescription'),
+                         definition=dict(type='str', alias='templateDefinition'),
+                         type=dict(type='str', alias='templateType'),
+                         device_type=dict(type='list', alias='deviceType'),
+                         template_min_version=dict(type='str', alias='templateMinVersion'),
                          factory_default=dict(type='bool', alias='factoryDefault'),
+                         url=dict(type='bool', alias='templateUrl'),
                          aggregate=dict(type='list'),
-    )
+                         )
 
     # seed the result dict in the object
     # we primarily care about changed and state
@@ -62,7 +62,8 @@ def run_module():
                     }
                 ]
             except:
-                module.fail_json(msg="Required values: name, description, device_type, definition, template_type, template_min_version, factory_default")
+                module.fail_json(
+                    msg="Required values: name, description, device_type, definition, template_type, template_min_version, factory_default")
         else:
             feature_template_list = [
                 {
@@ -78,18 +79,20 @@ def run_module():
     for feature_template in feature_template_list:
         if viptela.params['state'] == 'present':
             payload = {
-                    'templateName': feature_template['templateName'],
-                    'templateDescription': feature_template['templateDescription'],
-                    'deviceType': feature_template['deviceType'],
-                    'templateDefinition': feature_template['templateDefinition'],
-                    'templateType': feature_template['templateType'],
-                    'templateMinVersion': feature_template['templateMinVersion'],
-                    'factoryDefault': feature_template['factoryDefault']
+                'templateName': feature_template['templateName'],
+                'templateDescription': feature_template['templateDescription'],
+                'deviceType': feature_template['deviceType'],
+                'templateType': feature_template['templateType'],
+                'templateMinVersion': feature_template['templateMinVersion'],
+                'factoryDefault': feature_template['factoryDefault']
             }
-            # if 'editedTemplateDefinition' in payload:
-            #     payload['templateDefinition'] = payload['editedTemplateDefinition']
-            # else:
-            #     payload['templateDefinition'] = payload['templateDefinition']
+            # We need to correctly order the 'templateDefinition' dictionary because vmanage requires certain entries first
+            template_definition = OrderedDict()
+            if 'vpn-id' in feature_template['templateDefinition']:
+                template_definition['vpn-id'] = feature_template['templateDefinition'].pop('vpn-id')
+            for key, value in feature_template['templateDefinition'].items():
+                template_definition[key] = value
+            payload['templateDefinition'] = template_definition
             if payload['templateName'] in feature_template_dict:
                 viptela.result['changed'] = False
                 # changed_items = viptela.compare_payloads(payload, feature_template_dict[payload['templateName']], compare_values=compare_values)
@@ -106,104 +109,85 @@ def run_module():
         else:
             if feature_template['templateName'] in feature_template_dict:
                 if not module.check_mode:
-                    viptela.request('/dataservice/template/feature/{0}'.format(feature_template_dict[feature_template['templateName']]['templateId']),
+                    viptela.request('/dataservice/template/feature/{0}'.format(
+                        feature_template_dict[feature_template['templateName']]['templateId']),
                                     method='DELETE')
                 viptela.result['changed'] = True
 
     viptela.exit_json(**viptela.result)
 
+
 def main():
     run_module()
 
+
 if __name__ == '__main__':
     main()
-    
+
 # {
-#     "templateName":"vpn0",
-#     "templateDescription":"vpn0",
-#     "templateType":"vpn-vedge",
-#     "templateMinVersion":"15.0.0",
-#     "transitionInProgress":true,
-#     "viewMode":"add",
-#     "deviceType":["vedge-cloud"],
-#     "deviceModels":[{"name":"vedge-cloud","displayName":"vEdge Cloud","deviceType":"vedge","isCliSupported":true,"isCiscoDeviceModel":false}],
-#     "templateUrl":"/app/configuration/template/feature/templates/vpn-vedge-15.0.0.html",
-#     "view":{"name":"add"},
-#     "removeTableRow":{},
-#     "templateDefinition":{
-#         "vpn-id":{"vipObjectType":"object","vipType":"constant","vipValue":0},
-#         "name":{"vipObjectType":"object","vipType":"ignore","vipVariableName":"vpn_name"},
-#         "ecmp-hash-key":{"layer4":{"vipObjectType":"object","vipType":"ignore","vipValue":"false","vipVariableName":"vpn_layer4"}},
-#         "tcp-optimization":{"vipObjectType":"node-only","vipType":"ignore","vipValue":"false","vipVariableName":"vpn_tcp_optimization"},
-#         "host":{"vipType":"ignore","vipValue":[],"vipObjectType":"tree","vipPrimaryKey":["hostname"]},
-#         "service":{"vipType":"ignore","vipValue":[],"vipObjectType":"tree","vipPrimaryKey":["svc-type"]},
-#         "ip":{
-#             "route":
-#                 {
-#                     "vipType":"constant",
-#                     "vipValue":
-#                         [
-#                             {
-#                                 "prefix":
-#                                  {
-#                                      "vipObjectType":"object",
-#                                      "vipType":"constant",
-#                                      "vipValue":"0.0.0.0/0",
-#                                      "vipVariableName":"vpn_ipv4_ip_prefix"
-#                                  },
-#                                 "next-hop":
-#                                     {
-#                                         "vipType":"constant",
-#                                         "vipValue":
-#                                             [
-#                                                 {
-#                                                     "address":
-#                                                         {
-#                                                             "vipObjectType":"object",
-#                                                             "vipType":"variableName",
-#                                                             "vipValue":"",
-#                                                             "vipVariableName":"vpn0_default_gateway"
-#                                                         },
-#                                                     "distance":
-#                                                         {
-#                                                             "vipObjectType":"object",
-#                                                             "vipType":"ignore",
-#                                                             "vipValue":1,
-#                                                             "vipVariableName":"vpn_next_hop_ip_distance_0"
-#                                                         },
-#                                                     "priority-order":
-#                                                         [
-#                                                             "address","distance"
-#                                                         ]
-#                                                 }
-#                                             ],
-#                                         "vipObjectType":"tree",
-#                                         "vipPrimaryKey":
-#                                             [
-#                                                 "address"
-#                                             ]
-#                                     },
-#                                 "priority-order":
-#                                     [
-#                                         "prefix",
-#                                         "next-hop"
-#                                     ]
-#                             }
-#                         ],
-#                     "vipObjectType":"tree",
-#                     "vipPrimaryKey":
-#                         [
-#                             "prefix"
-#                         ]
-#                 },
-#             "gre-route":{},
-#             "ipsec-route":{}},
-#         "ipv6":{},
-#         "omp":{"advertise":{"vipType":"ignore","vipValue":[],"vipObjectType":"tree","vipPrimaryKey":["protocol"]},"ipv6-advertise":{"vipType":"ignore","vipValue":[],"vipObjectType":"tree","vipPrimaryKey":["protocol"]}}
-#     },
-#     "factoryDefault":false}
+#     "templateName": "vedge_vpn0",
+#     "templateDescription": "vedge_vpn0",
+#     "templateType": "vpn-vedge",
+#     "templateMinVersion": "15.0.0",
+#     "transitionInProgress": true,
+#     "viewMode": "add",
+#     "deviceType": ["vedge-cloud"],
+#     "deviceModels": [
+#         {"name": "vedge-cloud", "displayName": "vEdge Cloud", "deviceType": "vedge", "isCliSupported": true,
+#          "isCiscoDeviceModel": false}],
+#     "templateUrl": "/app/configuration/template/feature/templates/vpn-vedge-15.0.0.html",
+#     "view": {"name": "add"},
+#     "removeTableRow": {},
+#     "templateDefinition":
+#         {
+#             "vpn-id": {"vipObjectType": "object", "vipType": "constant", "vipValue": 0},
+#             "name": {"vipObjectType": "object", "vipType": "ignore", "vipVariableName": "vpn_name"},
+#             "ecmp-hash-key": {
+#                 "layer4": {"vipObjectType": "object", "vipType": "ignore", "vipValue": "false",
+#                            "vipVariableName": "vpn_layer4"}},
+#             "tcp-optimization": {"vipObjectType": "node-only", "vipType": "ignore", "vipValue": "false",
+#                                  "vipVariableName": "vpn_tcp_optimization"},
+#             "host": {"vipType": "ignore", "vipValue": [], "vipObjectType": "tree",
+#                      "vipPrimaryKey": ["hostname"]},
+#             "service": {"vipType": "ignore", "vipValue": [], "vipObjectType": "tree",
+#                         "vipPrimaryKey": ["svc-type"]}, "ip": {"route": {"vipType": "constant",
+#                                                                          "vipValue": [{"prefix": {
+#                                                                              "vipObjectType": "object",
+#                                                                              "vipType": "constant",
+#                                                                              "vipValue": "0.0.0.0/0",
+#                                                                              "vipVariableName": "vpn_ipv4_ip_prefix"},
+#                                                                              "next-hop": {
+#                                                                                  "vipType": "constant",
+#                                                                                  "vipValue": [{
+#                                                                                      "address": {
+#                                                                                          "vipObjectType": "object",
+#                                                                                          "vipType": "variableName",
+#                                                                                          "vipValue": "",
+#                                                                                          "vipVariableName": "vpn0_default_gateway"},
+#                                                                                      "distance": {
+#                                                                                          "vipObjectType": "object",
+#                                                                                          "vipType": "ignore",
+#                                                                                          "vipValue": 1,
+#                                                                                          "vipVariableName": "vpn_next_hop_ip_distance_0"},
+#                                                                                      "priority-order": [
+#                                                                                          "address",
+#                                                                                          "distance"]}],
+#                                                                                  "vipObjectType": "tree",
+#                                                                                  "vipPrimaryKey": [
+#                                                                                      "address"]},
+#                                                                              "priority-order": [
+#                                                                                  "prefix",
+#                                                                                  "next-hop"]}],
+#                                                                          "vipObjectType": "tree",
+#                                                                          "vipPrimaryKey": ["prefix"]},
+#                                                                "gre-route": {}, "ipsec-route": {}},
+#             "ipv6": {}, "omp": {
+#             "advertise": {"vipType": "ignore", "vipValue": [], "vipObjectType": "tree", "vipPrimaryKey": ["protocol"]},
+#             "ipv6-advertise": {"vipType": "ignore", "vipValue": [], "vipObjectType": "tree",
+#                                "vipPrimaryKey": ["protocol"]}}}, "factoryDefault": false
+# }
 
 # {"templateName":"vedge_vpn0","templateDescription":"vedge_vpn0","templateType":"vpn-vedge","templateMinVersion":"15.0.0","transitionInProgress":true,"viewMode":"add","deviceType":["vedge-cloud"],"deviceModels":[{"name":"vedge-cloud","displayName":"vEdge Cloud","deviceType":"vedge","isCliSupported":true,"isCiscoDeviceModel":false}],"templateUrl":"/app/configuration/template/feature/templates/vpn-vedge-15.0.0.html","view":{"name":"add"},"removeTableRow":{},"templateDefinition":{"vpn-id":{"vipObjectType":"object","vipType":"constant","vipValue":0},"name":{"vipObjectType":"object","vipType":"ignore","vipVariableName":"vpn_name"},"ecmp-hash-key":{"layer4":{"vipObjectType":"object","vipType":"ignore","vipValue":"false","vipVariableName":"vpn_layer4"}},"tcp-optimization":{"vipObjectType":"node-only","vipType":"ignore","vipValue":"false","vipVariableName":"vpn_tcp_optimization"},"host":{"vipType":"ignore","vipValue":[],"vipObjectType":"tree","vipPrimaryKey":["hostname"]},"service":{"vipType":"ignore","vipValue":[],"vipObjectType":"tree","vipPrimaryKey":["svc-type"]},"ip":{"route":{"vipType":"constant","vipValue":[{"prefix":{"vipObjectType":"object","vipType":"constant","vipValue":"0.0.0.0/0","vipVariableName":"vpn_ipv4_ip_prefix"},"next-hop":{"vipType":"constant","vipValue":[{"address":{"vipObjectType":"object","vipType":"variableName","vipValue":"","vipVariableName":"vpn0_default_gateway"},"distance":{"vipObjectType":"object","vipType":"ignore","vipValue":1,"vipVariableName":"vpn_next_hop_ip_distance_0"},"priority-order":["address","distance"]}],"vipObjectType":"tree","vipPrimaryKey":["address"]},"priority-order":["prefix","next-hop"]}],"vipObjectType":"tree","vipPrimaryKey":["prefix"]},"gre-route":{},"ipsec-route":{}},"ipv6":{},"omp":{"advertise":{"vipType":"ignore","vipValue":[],"vipObjectType":"tree","vipPrimaryKey":["protocol"]},"ipv6-advertise":{"vipType":"ignore","vipValue":[],"vipObjectType":"tree","vipPrimaryKey":["protocol"]}}},"factoryDefault":false}
 
-#{"state":{"columns":[{"name":"templateName","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"templateDescription","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"configType","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"deviceType","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"templateAttached","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"devicesAttached","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"lastUpdatedBy","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"lastUpdatedOn","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"deviceStatus","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"hoverActions","visible":true,"width":45,"sort":{},"filters":[{}],"pinned":"right"}],"scrollFocus":{"focus":false},"selection":[],"grouping":{},"treeView":{},"pagination":{}}}
-#grid-TemplateMasterWithFeature	grid-TemplateMasterWithFeature	feature	d6daebe7-962c-4386-9f1d-ce51185e97fe	feature	models/	types/	models/	types/	15.0.0	events	events	feature/	feature	events	device	syncstatus/	grid-TemplateMasterWithFeature	grid-TemplateMasterWithFeature	vbond	vedge/	models/	1037f44b-53fa-49d6-899e-9a94e9c9ebbb	feature/	vedge-cloud	vedge	events	1037f44b-53fa-49d6-899e-9a94e9c9ebbb	device	syncstatus/	grid-TemplateMasterWithFeature	grid-TemplateMasterWithFeature	vbond	vedge/	models/	1037f44b-53fa-49d6-899e-9a94e9c9ebbb	feature/
+# {"state":{"columns":[{"name":"templateName","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"templateDescription","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"configType","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"deviceType","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"templateAttached","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"devicesAttached","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"lastUpdatedBy","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"lastUpdatedOn","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"deviceStatus","visible":true,"width":"*","sort":{},"filters":[{}],"pinned":""},{"name":"hoverActions","visible":true,"width":45,"sort":{},"filters":[{}],"pinned":"right"}],"scrollFocus":{"focus":false},"selection":[],"grouping":{},"treeView":{},"pagination":{}}}
+# grid-TemplateMasterWithFeature	grid-TemplateMasterWithFeature	feature	d6daebe7-962c-4386-9f1d-ce51185e97fe	feature	models/	types/	models/	types/	15.0.0	events	events	feature/	feature	events	device	syncstatus/	grid-TemplateMasterWithFeature	grid-TemplateMasterWithFeature	vbond	vedge/	models/	1037f44b-53fa-49d6-899e-9a94e9c9ebbb	feature/	vedge-cloud	vedge	events	1037f44b-53fa-49d6-899e-9a94e9c9ebbb	device	syncstatus/	grid-TemplateMasterWithFeature	grid-TemplateMasterWithFeature	vbond	vedge/	models/	1037f44b-53fa-49d6-899e-9a94e9c9ebbb	feature/

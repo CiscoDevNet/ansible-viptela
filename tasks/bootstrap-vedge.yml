@@ -62,6 +62,4 @@
     connection: network_cli
     register: command_results
 
-  - debug: var=command_results
-
   when: inventory_hostname not in vedge_hostname_list

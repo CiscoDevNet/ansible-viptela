@@ -6,7 +6,6 @@ import re
 import time
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 
-
 try:
     from json.decoder import JSONDecodeError
 except ImportError:
@@ -435,11 +434,12 @@ class viptelaModule(object):
             time.sleep(5)
 
         self.result['action_id'] = action_id
-        self.result['action_status'] = action_status
-        self.result['action_activity'] = action_activity
-        self.result['action_config'] = action_config
-        if self.result['action_status'] == 'failure':
-            self.fail_json(msg="Action failed")
+        if 'action_status' in self.result:
+            self.result['action_status'] = action_status
+            self.result['action_activity'] = action_activity
+            self.result['action_config'] = action_config
+            if self.result['action_status'] == 'failure':
+                self.fail_json(msg="Action failed")
         return response
 
     def exit_json(self, **kwargs):

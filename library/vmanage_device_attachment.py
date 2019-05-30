@@ -44,8 +44,6 @@ def run_module():
                            )
     viptela = viptelaModule(module)
 
-
-
     # First, get the list of vedges and see if this device is in the list
     devices = viptela.get_device_dict('vedges')
     if viptela.params['device'] not in devices:
@@ -121,19 +119,6 @@ def run_module():
                     action_id = response.json['id']
                 else:
                     viptela.fail_json(msg='Did not get action ID after attaching device to template.')
-
-                    #     # If told, wait for the status of the request and report it
-                    #     if viptela.params['wait']:
-                    #         status = 'in_progress'
-                    #         while status == "in_progress":
-                    #             response = viptela.request('/dataservice/device/action/status/{0}'.format(viptela.result['action_id']))
-                    #             if response.json:
-                    #                 status = response.json['summary']['status']
-                    #                 time.sleep(5)
-                    #         viptela.result['action_status'] = response.json['data'][0]['statusId']
-                    #         viptela.result['action_activity'] = response.json['data'][0]['currentActivity']
-                    # else:
-                    #     viptela.fail_json(msg='Did not get action ID after attaching device to template.')
     else:
         if 'templateId' in device_data:
             viptela.result['changed'] = True

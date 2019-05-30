@@ -22,6 +22,12 @@ This role can perform the following functions:
 - Get Template facts
 - Get Device facts
 
+
+#### Common Attributes
+* `host`: IP address or FQDN of vManage
+* `user`: Username used to log in to vManage
+* `password`: Password used to log into vManage
+
 ### Get Device Template Facts
 ```yaml
 - vmanage_device_template_facts:
@@ -30,6 +36,16 @@ This role can perform the following functions:
     password: "{{ ansible_password }}"
     factory_default: no
 ```
+
+Retrieves device template facts from vManange
+
+####Arguments:
+* `factory_default`: Include factory default templates
+
+####Returns:
+* `device_templates`: The device templates defined in vManage
+* `attached_devices`: The devices current attached to the template
+* `input`: Variables required by template
 
 ### Feature Template Facts:
 ```yaml
@@ -40,8 +56,16 @@ This role can perform the following functions:
     factory_default: no
 ```
 
+Retrieves feature template facts from vManange
+
+####Arguments:
+* `factory_default`: Include factory default templates
+
+####Returns:
+* `feature_templates`: The feature templates defined in vManage
+
 ### Feature templates operations
-```
+```yaml
 - vmanage_feature_template:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
@@ -50,8 +74,20 @@ This role can perform the following functions:
     aggregate: "{{ vmanage_templates.feature_templates }}"
 ```
 
+Create or delete a feature template
+
+#### Arguments
+ * `name`: Name of the feature template
+ * `description`: Description of the feature template
+ * `definition`: Feature template definition
+ * `type`: Type of feature temaplate
+ * `device_type`: Device type to which the the template can be applied
+ * `template_min_version`: Minimum version of vManage required for template
+ * `factory_default`: Factory default template
+ * `aggregate`: A list of items composed of the arguments above
+
 ### Device template operations
-```
+```yaml
 - vmanage_device_template:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
@@ -59,6 +95,18 @@ This role can perform the following functions:
     state: present
     aggregate: "{{ vmanage_templates.device_templates }}"
 ```
+
+Create or delete a device template
+
+#### Arguments
+ * `name`: Name of the device template
+ * `description`: Description of the device template
+ * `templates`: Feature templates includes in the device template
+ * `config_type`: Template type: `template` or `cli`
+ * `device_type`: Device type to which the the template can be applied
+ * `template_min_version`: Minimum version of vManage required for template
+ * `factory_default`: Factory default template
+ * `aggregate`: A list of items composed of the arguments above
 
 ### Attach template to device:
 ```yaml
@@ -77,8 +125,17 @@ This role can perform the following functions:
     state: "{{ state }}"
 ```
 
+Attach/Detach template to/from device
+
+#### Arguments:
+* `state`: The state of the attachment: `absent` or `present`
+* `device`: The name of the device to which 
+* `template`: The name of the template to apply
+* `variables`: The variable required by the template.  (See vmanage_device_template for required variables)
+* `wait`: Wait for the application of the template to succeed or fail.
+
 ### Policy List Facts:
-```
+```yaml
 - vmanage_policy_list_facts:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
@@ -86,8 +143,14 @@ This role can perform the following functions:
   register: policy_list_facts
 ```
 
+Retrieve policy list facts
+
+#### Returns:
+* `policy_lists`: The policy lists currently defined in vManage
+
+
 ### Policy Definition Facts:
-```
+```yaml
 - vmanage_policy_definition_facts:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
@@ -95,19 +158,38 @@ This role can perform the following functions:
   register: policy_definition_facts
 ```
 
+Retrieve policy definition facts
+
+#### Returns:
+* `policy_definitions`: The policy definitions currently defined in vManage
+
 ### Import policy lists
-```
+```yaml
 - vmanage_policy_list:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
     password: "{{ ansible_password }}"
-    type: "{{ item.key }}"
+    name: blocked_prefixes
+    description: Blocked Prefixes
+    type: dataPrefix
+    entries:
+      - ipPrefix: 10.0.1.0/24
+      - ipPrefix: 10.0.2.0/24
+      - ipPrefix: 10.0.3.0/24 
     state: present
     aggregate: "{{ item.value }}"
 ```
 
+#### Arguments:
+* `name`: Policy List name
+* `description`: Policy List description
+* `type`: Policy List type
+* `entries`: The list entries appropriate to the type
+* `state`: absent or present
+* `aggregate`: A list of items composed of the arguments above
+
 ### Import policy definitions
-```
+```yaml
 - vmanage_policy_definition:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
@@ -118,7 +200,7 @@ This role can perform the following functions:
 ```
 
 ### Import central policies
-```
+```yaml
 - vmanage_central_policy:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
@@ -128,7 +210,7 @@ This role can perform the following functions:
 ```
 
 ### Central Policy Facts:
-```
+```yaml
 - vmanage_central_policy_facts:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
@@ -137,7 +219,7 @@ This role can perform the following functions:
 ```
 
 ### Add Central Policy
-```
+```yaml
 - vmanage_central_policy:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
@@ -148,7 +230,7 @@ This role can perform the following functions:
 ```
 
 ### Activate Central Policy
-```
+```yaml
 - vmanage_central_policy:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
@@ -160,7 +242,7 @@ This role can perform the following functions:
   register: policy_facts
 ```
 ### Activate Central Policy
-```
+```yaml
 - vmanage_central_policy:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"

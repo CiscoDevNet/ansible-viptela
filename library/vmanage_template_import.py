@@ -56,7 +56,9 @@ def run_module():
                 'templateDefinition': data['templateDefinition'],
                 'templateType': data['templateType'],
                 'templateMinVersion': data['templateMinVersion'],
-                'factoryDefault': data['factoryDefault']
+                'factoryDefault': data['factoryDefault'],
+                'configType': data['configType'],
+                'feature': data['feature'],
             }
             viptela.result['payload'] = payload
             # Don't make the actual POST if we are in check mode
