@@ -39,10 +39,10 @@ This role can perform the following functions:
 
 Retrieves device template facts from vManange
 
-####Arguments:
+#### Arguments:
 * `factory_default`: Include factory default templates
 
-####Returns:
+#### Returns:
 * `device_templates`: The device templates defined in vManage
 * `attached_devices`: The devices current attached to the template
 * `input`: Variables required by template
@@ -58,10 +58,10 @@ Retrieves device template facts from vManange
 
 Retrieves feature template facts from vManange
 
-####Arguments:
+#### Arguments:
 * `factory_default`: Include factory default templates
 
-####Returns:
+#### Returns:
 * `feature_templates`: The feature templates defined in vManage
 
 ### Feature templates operations
@@ -134,36 +134,7 @@ Attach/Detach template to/from device
 * `variables`: The variable required by the template.  (See vmanage_device_template for required variables)
 * `wait`: Wait for the application of the template to succeed or fail.
 
-### Policy List Facts:
-```yaml
-- vmanage_policy_list_facts:
-    user: "{{ ansible_user }}"
-    host: "{{ vmanage_ip }}"
-    password: "{{ ansible_password }}"
-  register: policy_list_facts
-```
-
-Retrieve policy list facts
-
-#### Returns:
-* `policy_lists`: The policy lists currently defined in vManage
-
-
-### Policy Definition Facts:
-```yaml
-- vmanage_policy_definition_facts:
-    user: "{{ ansible_user }}"
-    host: "{{ vmanage_ip }}"
-    password: "{{ ansible_password }}"
-  register: policy_definition_facts
-```
-
-Retrieve policy definition facts
-
-#### Returns:
-* `policy_definitions`: The policy definitions currently defined in vManage
-
-### Import policy lists
+### Policy Lists
 ```yaml
 - vmanage_policy_list:
     user: "{{ ansible_user }}"
@@ -188,7 +159,21 @@ Retrieve policy definition facts
 * `state`: absent or present
 * `aggregate`: A list of items composed of the arguments above
 
-### Import policy definitions
+### Policy List Facts:
+```yaml
+- vmanage_policy_list_facts:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+  register: policy_list_facts
+```
+
+Retrieve policy list facts
+
+#### Returns:
+* `policy_lists`: The policy lists currently defined in vManage
+
+### Policy definition
 ```yaml
 - vmanage_policy_definition:
     user: "{{ ansible_user }}"
@@ -199,7 +184,31 @@ Retrieve policy definition facts
     aggregate: "{{ item.value }}"
 ```
 
-### Import central policies
+#### Arguments:
+* `state`: absent or present
+* `name`: Policy List name
+* `description`: Policy List description
+* `type`: Policy List type (`cflowd`, `dnssecurity`, `control`, `hubandspoke`, `acl`, `vpnmembershipgroup`, `mesh`, `rewriterule`, `data`,`rewriterule`, `aclv6`)
+* `sequences`: Policy definition sequences
+* `default_action`: Default policy action (e.g. `drop`)
+* `aggregate`: A list of items composed of the arguments above
+
+### Policy Definition Facts:
+```yaml
+- vmanage_policy_definition_facts:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+  register: policy_definition_facts
+```
+
+Retrieve policy definition facts
+
+#### Returns:
+* `policy_definitions`: The policy definitions currently defined in vManage
+
+### Central Policy
+#### Add Central Policy
 ```yaml
 - vmanage_central_policy:
     user: "{{ ansible_user }}"
@@ -208,6 +217,27 @@ Retrieve policy definition facts
     state: present
     aggregate: "{{ vmanage_policy.vmanage_central_policies }}"
 ```
+
+#### Activate Central Policy
+```yaml
+- vmanage_central_policy:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+    state: activated
+    name: central_policy
+    wait: yes
+  register: policy_facts
+```
+
+#### Arguments:
+* `state`: State (`absent`, `present`, `activated`, `deactivated`)
+>Note: `activated`, `deactivated` must be separate invocations of the module
+* `name`: Central Policy name
+* `description`: Central Policy description
+* `type`: Policy type
+* `definition`: Policy definition
+* `wait`: Wait for the application of the template to succeed or fail.
 
 ### Central Policy Facts:
 ```yaml
@@ -218,40 +248,11 @@ Retrieve policy definition facts
   register: central_policy_facts
 ```
 
-### Add Central Policy
-```yaml
-- vmanage_central_policy:
-    user: "{{ ansible_user }}"
-    host: "{{ vmanage_ip }}"
-    password: "{{ ansible_password }}"
-    state: present
-    aggregate: "{{ vmanage_central_policy.central_policy }}"
-  register: policy_facts
-```
+Retrieve policy definition facts
 
-### Activate Central Policy
-```yaml
-- vmanage_central_policy:
-    user: "{{ ansible_user }}"
-    host: "{{ vmanage_ip }}"
-    password: "{{ ansible_password }}"
-    state: activated
-    name: central_policy
-    wait: yes
-    aggregate: "{{ vmanage_central_policy.central_policy }}"
-  register: policy_facts
-```
-### Activate Central Policy
-```yaml
-- vmanage_central_policy:
-    user: "{{ ansible_user }}"
-    host: "{{ vmanage_ip }}"
-    password: "{{ ansible_password }}"
-    state: activated
-    wait: yes
-    aggregate: "{{ vmanage_central_policy.central_policy }}"
-  register: policy_facts
-```
+#### Returns:
+* `policy_definitions`: The policy definitions currently defined in vManage
+
 
 ### Get status of a device action:
 ```yaml
