@@ -64,7 +64,7 @@ Retrieves feature template facts from vManange
 #### Returns:
 * `feature_templates`: The feature templates defined in vManage
 
-### Feature templates operations
+### Feature template operations
 ```yaml
 - vmanage_feature_template:
     user: "{{ ansible_user }}"
@@ -131,7 +131,7 @@ Attach/Detach template to/from device
 * `state`: The state of the attachment: `absent` or `present`
 * `device`: The name of the device to which 
 * `template`: The name of the template to apply
-* `variables`: The variable required by the template.  (See vmanage_device_template for required variables)
+* `variables`: The variable required by the template.  (See vmanage_device_template_facts for required variables)
 * `wait`: Wait for the application of the template to succeed or fail.
 
 ### Policy Lists
