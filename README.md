@@ -263,6 +263,9 @@ Retrieve policy definition facts
     id: "{{ attachment_results.action_id }}"
 ```
 
+Retrieve status of device action
+
+
 ### Get device facts:
 ```yaml
 - vmanage_device_facts:
@@ -270,6 +273,8 @@ Retrieve policy definition facts
     host: "{{ ansible_host }}"
     password: "{{ ansible_password }}"
 ```
+
+Retrieve device facts
 
 ### Upload serial number file:
 ```yaml
@@ -280,7 +285,17 @@ Retrieve policy definition facts
     file: 'licenses/serialFile.viptela'
 ```
 
+### P
+- vmanage_nping:
+    user: "{{ ansible_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ ansible_password }}"
+    dst_ip: "{{ ping_dst_ip }}"
+    vedge: "{{ ping_vedge }}"
+    vpn: "{{ ping_vpn }}"
 
+#### Arguments:
+* `file`: name of the serial file
 
 ## Role Tasks
 
