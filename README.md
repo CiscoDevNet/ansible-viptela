@@ -289,6 +289,7 @@ Retrieve device facts
 * `file`: name of the serial file
 
 ### Ping from vEdge
+```yaml
 - vmanage_nping:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
@@ -296,6 +297,7 @@ Retrieve device facts
     dst_ip: 1.2.3.4
     vedge: site1-vedge1
     vpn: 10
+```
 
 #### Arguments:
 * `vedge`: Name of the vedge from which to ping
