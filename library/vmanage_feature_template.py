@@ -84,15 +84,16 @@ def run_module():
                 'deviceType': feature_template['deviceType'],
                 'templateType': feature_template['templateType'],
                 'templateMinVersion': feature_template['templateMinVersion'],
-                'factoryDefault': feature_template['factoryDefault']
+                'factoryDefault': feature_template['factoryDefault'],
+                'templateDefinition': feature_template['templateDefinition']
             }
             # We need to correctly order the 'templateDefinition' dictionary because vmanage requires certain entries first
-            template_definition = OrderedDict()
-            if 'vpn-id' in feature_template['templateDefinition']:
-                template_definition['vpn-id'] = feature_template['templateDefinition'].pop('vpn-id')
-            for key, value in feature_template['templateDefinition'].items():
-                template_definition[key] = value
-            payload['templateDefinition'] = template_definition
+            # template_definition = OrderedDict()
+            # if 'vpn-id' in feature_template['templateDefinition']:
+            #     template_definition['vpn-id'] = feature_template['templateDefinition'].pop('vpn-id')
+            # for key, value in feature_template['templateDefinition'].items():
+            #     template_definition[key] = value
+            # payload['templateDefinition'] = template_definition
             if payload['templateName'] in feature_template_dict:
                 viptela.result['changed'] = False
                 # changed_items = viptela.compare_payloads(payload, feature_template_dict[payload['templateName']], compare_values=compare_values)

@@ -6,10 +6,8 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-import requests
 from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.viptela import viptelaModule, viptela_argument_spec
-
 
 def run_module():
     # define available arguments/parameters a user can pass to the module

@@ -5,6 +5,7 @@ import requests
 import re
 import time
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
+from collections import OrderedDict
 
 try:
     from json.decoder import JSONDecodeError
@@ -71,7 +72,7 @@ class viptelaModule(object):
         return value
 
     def list_to_dict(self, list, key_name, remove_key=True):
-        dict = {}
+        dict = OrderedDict()
         for item in list:
             if key_name in item:
                 if remove_key:
@@ -425,7 +426,7 @@ class viptelaModule(object):
             response = self.request('/dataservice/device/action/status/{0}'.format(action_id))
             if response.json:
                 status = response.json['summary']['status']
-                if response.json['data']:
+                if 'data' in response.json and response.json['data']:
                     action_status = response.json['data'][0]['statusId']
                     action_activity = response.json['data'][0]['activity']
                     action_config = response.json['data'][0]['actionConfig']
@@ -433,13 +434,13 @@ class viptelaModule(object):
                 self.fail_json(msg="Unable to get action status")
             time.sleep(5)
 
+        # self.result['action_response'] = response.json
         self.result['action_id'] = action_id
-        if 'action_status' in self.result:
-            self.result['action_status'] = action_status
-            self.result['action_activity'] = action_activity
-            self.result['action_config'] = action_config
-            if self.result['action_status'] == 'failure':
-                self.fail_json(msg="Action failed")
+        self.result['action_status'] = action_status
+        self.result['action_activity'] = action_activity
+        self.result['action_config'] = action_config
+        if self.result['action_status'] == 'failure':
+            self.fail_json(msg="Action failed")
         return response
 
     def exit_json(self, **kwargs):

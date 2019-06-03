@@ -6,7 +6,6 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.viptela import viptelaModule, viptela_argument_spec
 
