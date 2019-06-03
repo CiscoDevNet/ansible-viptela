@@ -20,7 +20,8 @@ def run_module():
                          probe_type=dict(type='str', required=False, default='icmp', alias='probeType'),
                          count=dict(type='str', required=False),
                          size=dict(type='str', required=False),
-                         df = dict(type='str', required=False)
+                         df = dict(type='str', required=False),
+                         rapid = dict(type='bool', required=False),
     )
 
     # seed the result dict in the object
@@ -60,6 +61,8 @@ def run_module():
         payload['size'] = viptela.params['size']
     if viptela.params['df']:
         payload['df'] = viptela.params['df']
+    if viptela.params['rapid']:
+        payload['rapid'] = "true" if viptela.params['rapid'] else "false"
 
     response = viptela.request('/dataservice/device/tools/nping/{0}'.format(system_ip), method='POST', payload=payload)
     if response.json:

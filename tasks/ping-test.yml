@@ -5,14 +5,15 @@
     dst_ip: "{{ ping_dst_ip }}"
     vedge: "{{ ping_vedge }}"
     vpn: "{{ ping_vpn }}"
+    count: 10
+    rapid: yes
   register: nping_results
-  ignore_errors: yes
   delegate_to: localhost
 
 - debug:
-    msg: "{{ ping_vedge }}(VPN {{ping_vpn}}) => {{ ping_dst_ip }}: {{ nping_results.json.packetsReceived }}/{{ nping_results.json.packetsTransmitted }}, {{ nping_results.json.lossPercentage }}% loss, Pass(actual/expected) {{ result }}/{{ expected_result }}"
-  failed_when: result != expected_result
+    msg: "{{ ping_vedge }}(VPN {{ping_vpn}}) => {{ ping_dst_ip }}: {{ nping_results.json.packetsReceived }}/{{ nping_results.json.packetsTransmitted }}, {{ nping_results.json.lossPercentage }}% loss, Pass(actual/expected) {{ actual_result }}/{{ expected_result }}"
+  failed_when: actual_result != expected_result
   ignore_errors: True
   vars:
-    result: "{{ nping_results.json.lossPercentage > 20 | bool }}"
-    expected_result: "{{ ping_pass | bool }}"
+    actual_result: "{{ True if nping_results.json.lossPercentage <= 20 else False }}"
+    expected_result: "{{ ping_pass }}"

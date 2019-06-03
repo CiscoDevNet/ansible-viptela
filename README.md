@@ -285,17 +285,26 @@ Retrieve device facts
     file: 'licenses/serialFile.viptela'
 ```
 
-### P
+#### Arguments:
+* `file`: name of the serial file
+
+### Ping from vEdge
 - vmanage_nping:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
     password: "{{ ansible_password }}"
-    dst_ip: "{{ ping_dst_ip }}"
-    vedge: "{{ ping_vedge }}"
-    vpn: "{{ ping_vpn }}"
+    dst_ip: 1.2.3.4
+    vedge: site1-vedge1
+    vpn: 10
 
 #### Arguments:
-* `file`: name of the serial file
+* `vedge`: Name of the vedge from which to ping
+* `dst_ip`: The IP to ping
+* `vpn`: The VPN number in which to ping
+* `src_interface`: The source interface on the vedge from which to ping
+* `count`: The number of packets to send
+* `rapid`: Whether to do a rapid ping
+
 
 ## Role Tasks
 
