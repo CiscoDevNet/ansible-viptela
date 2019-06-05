@@ -27,7 +27,7 @@
     return_content: yes
   register: uri_results
   delegate_to: localhost
-
+  retries: 3
 #- debug: var=uri_results
 
 - name: Set CA Type
@@ -44,7 +44,7 @@
     return_content: yes
   register: uri_results
   delegate_to: localhost
-
+  retries: 3
 #- debug: var=uri_results
 
 - name: Get CA Cert
@@ -57,7 +57,7 @@
     return_content: yes
   register: uri_results
   delegate_to: localhost
-
+  retries: 3
 # - debug: var=uri_results
 
 - name: Set CA Cert
@@ -73,5 +73,5 @@
     return_content: yes
   register: uri_results
   delegate_to: localhost
-
+  retries: 3
 #- debug: var=uri_results

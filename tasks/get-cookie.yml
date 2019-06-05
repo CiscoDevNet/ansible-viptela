@@ -21,6 +21,7 @@
   failed_when: false
   delegate_to: localhost
   when: viptela_api_cookie is defined
+  retries: 3
 
 - name: Get Cookie
   uri:

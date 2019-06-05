@@ -14,3 +14,4 @@
     return_content: yes
   register: uri_results
   delegate_to: localhost
+  retries: 3

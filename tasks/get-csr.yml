@@ -17,6 +17,7 @@
     return_content: yes
   register: uri_results
   delegate_to: localhost
+  retries: 3
 
 - set_fact:
     found_device_ip: "{{ uri_results.json.data | selectattr('host-name', 'defined') | selectattr('host-name', 'equalto', device_hostname) | map(attribute='deviceIP') | join('') }}"
@@ -41,6 +42,7 @@
     register: uri_results
     changed_when: true
     delegate_to: localhost
+    retries: 3
 
   - set_fact:
       device_csr: "{{ uri_results.json.data[0].deviceCSR }}"

@@ -79,46 +79,65 @@ def run_module():
                         viptela.fail_json(msg='Template {0} requires variables: {1}'.format(viptela.params['template'], ', '.join(template_variables)))
 
 
+        # Construct the variable payload
+        device_template_variables = {
+                "csv-status": "complete",
+                "csv-deviceId": device_data['uuid'],
+                "csv-deviceIP": device_data['deviceIP'],
+                "csv-host-name": viptela.params['device'],
+                # "csv-templateId": template_data['templateId'],
+                '//system/host-name': viptela.params['device'],
+                '//system/system-ip': device_data['system-ip'],
+                '//system/site-id': device_data['site-id'],
+            }
+
+        # For each of the variables passed in, match them up with the names of the variables requires in the
+        # templates and add them with the corresponding property.  The the variables is not in template_variables,
+        # just leave it out since it is not required.
+        for key, value in viptela.params['variables'].items():
+            if key in template_variables:
+                property = template_variables[key]
+                device_template_variables[property] = viptela.params['variables'][key]
+
         if viptela.params['device'] in template_data['attached_devices']:
-            viptela.result['changed'] = False
+            # Add the template ID to the device's variable payload because we'll need it for comparison and update.
+            # device_template_variables['csv-templateId'] = template_data['templateId']
+            # The device is already attached to the template.  We need to see if any of the input changed, so we make
+            # an API call to get the input on last attach
+            payload = {
+                "templateId": template_data['templateId'],
+                "deviceIds": [device_data['uuid']],
+                "isEdited": "true",
+                "isMasterEdited": "false"
+            }
+            response = viptela.request('/dataservice/template/device/config/input/', method='POST', payload=payload)
+            if response.json and 'data' in response.json:
+                if response.json['data'][0] != device_template_variables:
+                    viptela.result['changed'] = True
+                    viptela.result['current_variables'] = response.json['data']
+                    viptela.result['new_variables'] = device_template_variables
+                else:
+                    viptela.result['changed'] = False
         else:
             viptela.result['changed'] = True
-            device_entry = {
-                    "csv-status": "complete",
-                    "csv-deviceId": device_data['uuid'],
-                    "csv-deviceIP": device_data['deviceIP'],
-                    "csv-host-name": viptela.params['device'],
-                    "csv-templateId": template_data['templateId'],
-                    '//system/host-name': viptela.params['device'],
-                    '//system/system-ip': device_data['system-ip'],
-                    '//system/site-id': device_data['site-id'],
-                }
 
-            # For each of the variables passed in, match them up with the names of the variables requires in the
-            # templates and add them with the corresponding property.  The the variables is not in template_variables,
-            # just leave it out since it is not required.
-            for key, value in viptela.params['variables'].items():
-                if key in template_variables:
-                    property = template_variables[key]
-                    device_entry[property] = viptela.params['variables'][key]
-
+        if not module.check_mode and viptela.result['changed']:
             payload = {
                 "deviceTemplateList":
                 [
                     {
                         "templateId": template_data['templateId'],
-                        "device": [device_entry],
+                        "device": [device_template_variables],
                         "isEdited": False,
                         "isMasterEdited": False
                     }
                 ]
             }
-            if not module.check_mode:
-                response = viptela.request('/dataservice/template/device/config/attachfeature', method='POST', payload=payload)
-                if response.json:
-                    action_id = response.json['id']
-                else:
-                    viptela.fail_json(msg='Did not get action ID after attaching device to template.')
+            response = viptela.request('/dataservice/template/device/config/attachfeature', method='POST', payload=payload)
+            if response.json:
+                action_id = response.json['id']
+            else:
+                viptela.fail_json(msg='Did not get action ID after attaching device to template.')
     else:
         if 'templateId' in device_data:
             viptela.result['changed'] = True

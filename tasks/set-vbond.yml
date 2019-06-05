@@ -11,6 +11,7 @@
     return_content: yes
   register: uri_results
   delegate_to: localhost
+  retries: 3
 
 - set_fact:
     current_vbond_ip: "{{ uri_results.json.data[0].domainIp | default('') }}"
@@ -32,3 +33,4 @@
   changed_when: true
   when: current_vbond_ip != vbond_ip
   delegate_to: localhost
+  retries: 3

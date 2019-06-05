@@ -12,6 +12,7 @@
   register: uri_results
   failed_when: false
   delegate_to: localhost
+  retries: 3
 
 - debug: msg="There are no serial numbers available"
   failed_when: uri_results.json.data[0] is not defined
@@ -50,6 +51,7 @@
       return_content: yes
     register: uri_results
     delegate_to: localhost
+    retries: 3
 
   - set_fact:
       device_otp: "{{ (uri_results.json.bootstrapConfig | regex_search('otp : ([a-z0-9]+)[^a-z0-9]', '\\1'))[0] }}"
