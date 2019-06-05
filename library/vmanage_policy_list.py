@@ -22,6 +22,8 @@ def run_module():
                             'dataprefix', 'prefix', 'aspath', 'class', 'community', 'extcommunity', 'mirror', 'tloc',
                             'sla', 'policer', 'ipprefixall', 'dataprefixall']),
                          entries = dict(type ='list'),
+                         push=dict(type='bool', default=False),
+                         force=dict(type='bool', default=False)
     )
 
     # seed the result dict in the object
@@ -63,13 +65,35 @@ def run_module():
     for list in policy_list:
         if viptela.params['state'] == 'present':
             if list['name'] in policy_list_dict:
-                changed_items = viptela.compare_payloads(list, policy_list_dict[list['name']], compare_values=compare_values)
-                if changed_items:
+                # FIXME Just compare the entries for now.
+                if (list['entries'] != policy_list_dict[list['name']]['entries']) or viptela.params['force']:
+                    list['listId'] = policy_list_dict[list['name']]['listId']
+                    viptela.result['new_entries'] = list['entries']
+                    viptela.result['existing_entries'] = policy_list_dict[list['name']]['entries']
+                    # If description is not specified, try to get it from the existing information
+                    if not list['description']:
+                        list['description'] = policy_list_dict[list['name']]['description']
                     viptela.result['changed'] = True
-                    viptela.result['what_changed'] = changed_items
                     if not module.check_mode:
-                        viptela.request('/dataservice/template/policy/list/{0}/{1}'.format(list['type'].lower(), policy_list_dict[list['name']]['listId']),
+                        viptela.result['put_payload'] = list
+                        response = viptela.request('/dataservice/template/policy/list/{0}/{1}'.format(list['type'].lower(), list['listId']),
                                         method='PUT', payload=list)
+                        viptela.result['response'] = response.json
+                        if response.json:
+                            # Updating the policy list returns a `processId` that locks the list and 'masterTemplatesAffected'
+                            # that lists the templates affected by the change.
+                            process_id = response.json['processId']
+                            viptela.result['put_payload'] = response.json['processId']
+                            if viptela.params['push']:
+                                # If told to push out the change, we need to reattach each template affected by the change
+                                for template_id in response.json['masterTemplatesAffected']:
+                                    action_id = viptela.reattach_device_template(template_id)
+
+                            # Delete the lock on the policy list
+                            # FIXME: The list does not seem to update when we unlock too soon, so I think that we need
+                            # to wait for the attachment, but need to understand this better.
+                            response = viptela.request('/dataservice/template/lock/{0}'.format(process_id), method='DELETE')
+                            viptela.result['lock_response'] = response.json
             else:
                 if not module.check_mode:
                     viptela.request('/dataservice/template/policy/list/{0}/'.format(list['type'].lower()),
@@ -82,6 +106,7 @@ def run_module():
                                     method='DELETE')
                 viptela.result['changed'] = True
 
+    viptela.logout()
     viptela.exit_json(**viptela.result)
 
 def main():
@@ -89,3 +114,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# https://192.133.178.76:8443/dataservice/template/lock/push_feature_template_configuration-2e133445-ae15-49ab-b74a-c1fe65e263b6

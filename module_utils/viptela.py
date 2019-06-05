@@ -63,8 +63,8 @@ class viptelaModule(object):
         self.login()
 
     # Deleting (Calling destructor)
-    def __del__(self):
-        self.logout()
+    # def __del__(self):
+    #     self.logout()
 
     def _fallback(self, value, fallback):
         if value is None:
@@ -115,6 +115,7 @@ class viptelaModule(object):
             return response
 
     def logout(self):
+        self.request('/dataservice/settings/clientSessionTimeout')
         self.request('/logout')
 
     def request(self, url_path, method='GET', headers=STANDARD_JSON_HEADER, data=None, files=None, payload=None):
@@ -150,14 +151,14 @@ class viptelaModule(object):
 
         return response
 
-    def get_template_attachments(self, template_id):
+    def get_template_attachments(self, template_id, key='host-name'):
         response = self.request('/dataservice/template/device/config/attached/{0}'.format(template_id))
 
         attached_devices = []
         if response.json:
             device_list = response.json['data']
             for device in device_list:
-                attached_devices.append(device['host-name'])
+                attached_devices.append(device[key])
 
         return attached_devices
 
@@ -419,6 +420,39 @@ class viptelaModule(object):
 
         return return_dict
 
+    def reattach_device_template(self, template_id):
+        device_list = self.get_template_attachments(template_id, key='uuid')
+        # First, we need to get the input to feed to the re-attach
+        payload = {
+            "templateId": template_id,
+            "deviceIds": device_list,
+            "isEdited": "true",
+            "isMasterEdited": "false"
+        }
+        response = self.request('/dataservice/template/device/config/input/', method='POST', payload=payload)
+        # Then we feed that to the attach
+        if response.json and 'data' in response.json:
+            payload = {
+                "deviceTemplateList":
+                    [
+                        {
+                            "templateId": template_id,
+                            "device": response.json['data'],
+                            "isEdited": "true",
+                            "isMasterEdited": "false"
+                        }
+                    ]
+            }
+            response = self.request('/dataservice/template/device/config/attachfeature', method='POST', payload=payload)
+            if response.json and 'id' in response.json:
+                self.waitfor_action_completion(response.json['id'])
+            else:
+                self.fail_json(
+                    msg='Did not get action ID after attaching device to template.')
+        else:
+            self.fail_json(msg="Could not retrieve input for template {0}".format(template_id))
+        return response.json['id']
+
     def waitfor_action_completion(self, action_id):
         status = 'in_progress'
         response = {}
@@ -444,6 +478,7 @@ class viptelaModule(object):
         return response
 
     def exit_json(self, **kwargs):
+        # self.logout()
         """Custom written method to exit from module."""
         self.result['status'] = self.status
         self.result['status_code'] = self.status_code
@@ -454,6 +489,7 @@ class viptelaModule(object):
         self.module.exit_json(**self.result)
 
     def fail_json(self, msg, **kwargs):
+        # self.logout()
         """Custom written method to return info on failure."""
         self.result['status'] = self.status
         self.result['status_code'] = self.status_code

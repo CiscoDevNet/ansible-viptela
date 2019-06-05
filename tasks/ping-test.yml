@@ -5,7 +5,7 @@
     dst_ip: "{{ ping_dst_ip }}"
     vedge: "{{ ping_vedge }}"
     vpn: "{{ ping_vpn }}"
-    count: 10
+    count: "{{ ping_count | default(3) }}"
     rapid: yes
   register: nping_results
   delegate_to: localhost
@@ -15,5 +15,6 @@
   failed_when: actual_result != expected_result
   ignore_errors: True
   vars:
-    actual_result: "{{ True if nping_results.json.lossPercentage <= 20 else False }}"
+    # actual_result: "{{ True if nping_results.json.lossPercentage <= 25 else False }}"
+    actual_result: "{{ True if nping_results.json.packetsReceived else False }}"
     expected_result: "{{ ping_pass }}"
