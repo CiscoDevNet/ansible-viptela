@@ -89,6 +89,8 @@ def run_module():
             }
             # FIXME (Issue #1): This is a temporary workaround for the fact that vManage requires it payload in a specific order
             template_definition = OrderedDict()
+            if 'if-name' in feature_template['templateDefinition']:
+                template_definition['if-name'] = feature_template['templateDefinition'].pop('if-name')
             if 'vpn-id' in feature_template['templateDefinition']:
                 template_definition['vpn-id'] = feature_template['templateDefinition'].pop('vpn-id')
             for key, value in feature_template['templateDefinition'].items():
