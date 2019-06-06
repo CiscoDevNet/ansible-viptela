@@ -11,10 +11,9 @@
     return_content: yes
   register: uri_results
   delegate_to: localhost
-  register: result
   retries: 3
   delay: 10
-  until: result is not failed
+  until: uri_results is not failed
 
 - set_fact:
     current_org_name: "{{ uri_results.json.data[0].org | default('') }}"
@@ -34,7 +33,6 @@
   delegate_to: localhost
   changed_when: true
   when: current_org_name != org_name
-  register: result
   retries: 3
   delay: 10
-  until: result is not failed
+  until: uri_results is not failed
