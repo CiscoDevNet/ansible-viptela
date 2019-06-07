@@ -465,8 +465,8 @@ class viptelaModule(object):
                     action_activity = response.json['data'][0]['activity']
                     action_config = response.json['data'][0]['actionConfig']
             else:
-                self.fail_json(msg="Unable to get action status")
-            time.sleep(5)
+                self.fail_json(msg="Unable to get action status: No response")
+            time.sleep(10)
 
         # self.result['action_response'] = response.json
         self.result['action_id'] = action_id

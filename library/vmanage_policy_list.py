@@ -82,18 +82,21 @@ def run_module():
                         if response.json:
                             # Updating the policy list returns a `processId` that locks the list and 'masterTemplatesAffected'
                             # that lists the templates affected by the change.
-                            process_id = response.json['processId']
-                            viptela.result['put_payload'] = response.json['processId']
-                            if viptela.params['push']:
-                                # If told to push out the change, we need to reattach each template affected by the change
-                                for template_id in response.json['masterTemplatesAffected']:
-                                    action_id = viptela.reattach_device_template(template_id)
+                            if 'processId' in response.json:
+                                process_id = response.json['processId']
+                                viptela.result['put_payload'] = response.json['processId']
+                                if viptela.params['push']:
+                                    # If told to push out the change, we need to reattach each template affected by the change
+                                    for template_id in response.json['masterTemplatesAffected']:
+                                        action_id = viptela.reattach_device_template(template_id)
 
-                            # Delete the lock on the policy list
-                            # FIXME: The list does not seem to update when we unlock too soon, so I think that we need
-                            # to wait for the attachment, but need to understand this better.
-                            response = viptela.request('/dataservice/template/lock/{0}'.format(process_id), method='DELETE')
-                            viptela.result['lock_response'] = response.json
+                                # Delete the lock on the policy list
+                                # FIXME: The list does not seem to update when we unlock too soon, so I think that we need
+                                # to wait for the attachment, but need to understand this better.
+                                response = viptela.request('/dataservice/template/lock/{0}'.format(process_id), method='DELETE')
+                                viptela.result['lock_response'] = response.json
+                            else:
+                                viptela.fail_json(msg="Did not get a process id when updating policy list")
             else:
                 if not module.check_mode:
                     viptela.request('/dataservice/template/policy/list/{0}/'.format(list['type'].lower()),
