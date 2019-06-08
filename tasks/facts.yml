@@ -14,6 +14,9 @@
         return_content: yes
       register: tenantstatus_results
       delegate_to: localhost
+      retries: 60
+      delay: 10
+      until: tenantstatus_results is not failed
 
     - debug: var=tenantstatus_results
 #

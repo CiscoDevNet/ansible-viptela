@@ -21,7 +21,9 @@
   failed_when: false
   delegate_to: localhost
   when: viptela_api_cookie is defined
-  retries: 3
+  retries: 60
+  delay: 10
+  until: login_results is not failed
 
 - name: Get Cookie
   uri:
@@ -40,6 +42,7 @@
   when: (viptela_api_cookie is not defined) or (login_results.msg is not search('OK'))
   retries: 60
   delay: 10
+  until: login_results is not failed
 
 - set_fact:
     viptela_api_cookie: "{{ login_results.set_cookie }}"

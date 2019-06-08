@@ -14,4 +14,6 @@
     return_content: yes
   register: uri_results
   delegate_to: localhost
-  retries: 3
+  retries: 60
+  delay: 10
+  until: uri_results is not failed

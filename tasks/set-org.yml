@@ -11,7 +11,7 @@
     return_content: yes
   register: uri_results
   delegate_to: localhost
-  retries: 3
+  retries: 60
   delay: 10
   until: uri_results is not failed
 
@@ -33,6 +33,6 @@
   delegate_to: localhost
   changed_when: true
   when: current_org_name != org_name
-  retries: 3
+  retries: 60
   delay: 10
   until: uri_results is not failed

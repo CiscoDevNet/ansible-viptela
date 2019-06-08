@@ -38,4 +38,6 @@
   changed_when: true
   delegate_to: localhost
   when: (device_ip not in controller_deviceIP_list) and (device_hostname not in controller_hostname_list)
-  retries: 3
+  retries: 60
+  delay: 10
+  until: controller_results is not failed
