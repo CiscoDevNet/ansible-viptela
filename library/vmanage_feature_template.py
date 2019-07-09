@@ -16,7 +16,7 @@ def run_module():
     argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
                          name=dict(type='str', alias='templateName'),
                          description=dict(type='str', alias='templateDescription'),
-                         definition=dict(type='str', alias='templateDefinition'),
+                         definition=dict(type='dict', alias='templateDefinition'),
                          type=dict(type='str', alias='templateType'),
                          device_type=dict(type='list', alias='deviceType'),
                          template_min_version=dict(type='str', alias='templateMinVersion'),
