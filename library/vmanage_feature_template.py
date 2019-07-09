@@ -17,7 +17,7 @@ def run_module():
                          name=dict(type='str', alias='templateName'),
                          description=dict(type='str', alias='templateDescription'),
                          definition=dict(type='str', alias='templateDefinition'),
-                         type=dict(type='str', alias='templateType'),
+                         template_type=dict(type='str', alias='templateType'),
                          device_type=dict(type='list', alias='deviceType'),
                          template_min_version=dict(type='str', alias='templateMinVersion'),
                          factory_default=dict(type='bool', alias='factoryDefault'),
