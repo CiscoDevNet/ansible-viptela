@@ -1,0 +1,47 @@
+- name: Clean rendered templates
+  file:
+    path: "{{item}}"
+    state: absent
+    force: true
+  run_once: True
+  with_fileglob:
+    - "{{role_path}}/files/rendered_templates/*"
+
+- name: Render template
+  template: src='BANNER_V01.j2' dest={{role_path}}/files/rendered_templates/{{ item.name }}.json
+  when: item.State  != "Ignore" and item.State  != "Absent"
+  with_items: "{{ Feature_Templates['Banner_Templates'] }}"
+
+# reference here: https://stackoverflow.com/questions/29399581/using-set-facts-and-with-items-together-in-ansible
+
+- set_fact:
+    feature_banner: "{{lookup('file', '{{item}}') }}"
+  with_fileglob:
+     - "{{role_path}}/files/rendered_templates/*.json"
+  register: feature_banner_registered_list
+
+- set_fact:
+    feature_banner_list: "{{ feature_banner_registered_list.results | map(attribute = 'ansible_facts.feature_banner') | list }}"
+
+
+#- vmanage_feature_template:
+#    user: "admin"
+#    host: "localhost:8443"
+#    password: "admin"
+#    state: present
+#    name: "{{ item.templateName }}"
+#    description: "{{ item.templateDescription }}"
+#    definition: "{{ item.templateDefinition }}"
+#    template_type: "{{ item.templateType }}"
+#    device_type: "{{ item.deviceType }}"
+#    template_min_version:  "{{ item.templateMinVersion }}"
+#    factory_default: "{{ item.factoryDefault }}"
+#  loop: "{{feature_banner_list}}"
+
+- name: Create Fetaute Banner
+  vmanage_feature_template:
+    user: "admin"
+    host: "localhost:8443"
+    password: "admin"
+    state: present
+    aggregate: "{{feature_banner_list}}"
