@@ -1,0 +1,33 @@
+{
+   "templateName":"{{ item.name }}",
+   "templateDescription": "Descr",
+   "templateType":"banner",
+   "deviceType":[
+      "vedge-5000",
+      "vedge-cloud",
+      "vedge-1000",
+      "vedge-2000",
+      "vedge-100",
+      "vedge-100-B",
+      "vedge-100-WM",
+      "vedge-100-M",
+      "vmanage",
+      "vsmart"
+   ],
+   "factoryDefault":false,
+   "templateMinVersion":"15.0.0",
+   "templateDefinition":{
+      "login":{
+         "vipObjectType":"object",
+         "vipType":"constant",
+         "vipValue": "{{ item.login }}",
+         "vipVariableName":"banner_login"
+      },
+      "motd":{
+         "vipObjectType":"object",
+         "vipType":"constant",
+         "vipValue": "{{ item.motd }}",
+         "vipVariableName":"banner_motd"
+      }
+   }
+}
