@@ -19,14 +19,22 @@
    "templateDefinition":{
       "login":{
          "vipObjectType":"object",
+{% if 'login' in item %}
          "vipType":"constant",
          "vipValue": "{{ item.login }}",
+{% else %}
+         "vipType":"ignore",
+{% endif %}
          "vipVariableName":"banner_login"
       },
       "motd":{
          "vipObjectType":"object",
+{% if 'motd' in item %}
          "vipType":"constant",
          "vipValue": "{{ item.motd }}",
+{% else %}
+         "vipType":"ignore",
+{% endif %}
          "vipVariableName":"banner_motd"
       }
    }
