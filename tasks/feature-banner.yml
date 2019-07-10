@@ -23,6 +23,10 @@
 - set_fact:
     feature_banner_list: "{{ feature_banner_registered_list.results | map(attribute = 'ansible_facts.feature_banner') | list }}"
 
+- set_fact:
+    absent_template_list: "{{ absent_template_list|default([]) + [ {'templateName': item.name } ] }}"
+  when: item.State  == "Absent"
+  with_items: "{{ Feature_Templates['Banner_Templates'] }}"
 
 #- vmanage_feature_template:
 #    user: "admin"
@@ -45,3 +49,11 @@
     password: "admin"
     state: present
     aggregate: "{{feature_banner_list}}"
+
+- name: Delete Fetaute Banner
+  vmanage_feature_template:
+    user: "admin"
+    host: "localhost:8443"
+    password: "admin"
+    state: absent
+    aggregate: "{{absent_template_list}}"
