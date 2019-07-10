@@ -20,12 +20,16 @@
       "login":{
          "vipObjectType":"object",
 {% if 'login' in item %}
+{% if 'variableName' in item.login %}
+         "vipType":"variableName",
+         "vipVariableName":"{{ item.login.variableName }}"
+{% else %}
          "vipType":"constant",
          "vipValue": "{{ item.login }}",
+{% endif %}
 {% else %}
          "vipType":"ignore",
 {% endif %}
-         "vipVariableName":"banner_login"
       },
       "motd":{
          "vipObjectType":"object",
