@@ -49,6 +49,7 @@
     password: "admin"
     state: present
     aggregate: "{{feature_banner_list}}"
+  when: feature_banner_list is defined
 
 - name: Delete Fetaute Banner
   vmanage_feature_template:
@@ -57,3 +58,4 @@
     password: "admin"
     state: absent
     aggregate: "{{absent_template_list}}"
+  when: absent_template_list is defined
