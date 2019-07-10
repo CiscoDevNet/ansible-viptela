@@ -14,19 +14,24 @@
 
 # reference here: https://stackoverflow.com/questions/29399581/using-set-facts-and-with-items-together-in-ansible
 
-- set_fact:
+- name: Loading templates from filesystem
+  set_fact:
     feature_banner: "{{lookup('file', '{{item}}') }}"
   with_fileglob:
      - "{{role_path}}/files/rendered_templates/*.json"
   register: feature_banner_registered_list
 
-- set_fact:
+- name: Creating a list of templates
+  set_fact:
     feature_banner_list: "{{ feature_banner_registered_list.results | map(attribute = 'ansible_facts.feature_banner') | list }}"
 
-- set_fact:
+- name: Creating a list of templates to be removed
+  set_fact:
     absent_template_list: []
+  no_log: True
 
-- set_fact:
+- name: Creating a list of templates to be removed
+  set_fact:
     absent_template_list: "{{ absent_template_list|default([]) + [ {'templateName': item.name } ] }}"
   when: item.State  == "Absent"
   with_items: "{{ Feature_Templates['Banner_Templates'] }}"
@@ -45,7 +50,7 @@
 #    factory_default: "{{ item.factoryDefault }}"
 #  loop: "{{feature_banner_list}}"
 
-- name: Create Fetaute Banner
+- name: Interact with the vManage to create templates
   vmanage_feature_template:
     user: "admin"
     host: "localhost:8443"
@@ -54,7 +59,7 @@
     aggregate: "{{feature_banner_list}}"
   when: feature_banner_list
 
-- name: Delete Fetaute Banner
+- name: Interact with the vManage to delete templates
   vmanage_feature_template:
     user: "admin"
     host: "localhost:8443"
