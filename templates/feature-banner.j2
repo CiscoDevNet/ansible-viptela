@@ -34,12 +34,16 @@
       "motd":{
          "vipObjectType":"object",
 {% if 'motd' in item %}
+{% if 'variableName' in item.motd %}
+         "vipType":"variableName",
+         "vipVariableName":"{{ item.motd.variableName }}"
+{% else %}
          "vipType":"constant",
          "vipValue": "{{ item.motd }}",
+{% endif %}
 {% else %}
          "vipType":"ignore",
 {% endif %}
-         "vipVariableName":"banner_motd"
       }
    }
 }
