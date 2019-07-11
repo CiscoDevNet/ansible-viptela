@@ -16,8 +16,8 @@ def run_module():
     argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
                          name=dict(type='str', alias='templateName'),
                          description=dict(type='str', alias='templateDescription'),
-                         definition=dict(type='dict', alias='templateDefinition'),
-                         type=dict(type='str', alias='templateType'),
+                         definition=dict(type='str', alias='templateDefinition'),
+                         template_type=dict(type='str', alias='templateType'),
                          device_type=dict(type='list', alias='deviceType'),
                          template_min_version=dict(type='str', alias='templateMinVersion'),
                          factory_default=dict(type='bool', alias='factoryDefault'),
@@ -65,11 +65,16 @@ def run_module():
                 module.fail_json(
                     msg="Required values: name, description, device_type, definition, template_type, template_min_version, factory_default")
         else:
-            feature_template_list = [
-                {
-                    'templateName': viptela.params['name']
-                }
-            ]
+            try:
+                feature_template_list = [
+                    {
+                        'templateName': viptela.params['name']
+                    }
+                ]
+            except:
+                module.fail_json(
+                    msg='Required values: name'
+                )
 
     feature_template_dict = viptela.get_feature_template_dict(factory_default=True, remove_key=False)
 
