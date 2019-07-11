@@ -65,11 +65,16 @@ def run_module():
                 module.fail_json(
                     msg="Required values: name, description, device_type, definition, template_type, template_min_version, factory_default")
         else:
-            feature_template_list = [
-                {
-                    'templateName': viptela.params['name']
-                }
-            ]
+            try:
+                feature_template_list = [
+                    {
+                        'templateName': viptela.params['name']
+                    }
+                ]
+            except:
+                module.fail_json(
+                    msg='Required values: name'
+                )
 
     feature_template_dict = viptela.get_feature_template_dict(factory_default=True, remove_key=False)
 
