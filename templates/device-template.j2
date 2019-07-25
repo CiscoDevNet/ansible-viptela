@@ -36,32 +36,34 @@
       ]
     },
 
-{% for vpn in  item.Feature_VPN  %}
+{% for VPN_Section in  item.Feature_VPN  %}
+
+{% for VPN_Name,Interface_Lists in  VPN_Section.items()  %}
 
     {
-      "templateId": "{{feature_template_db[vpn]}}",
+      "templateId": "{{feature_template_db[VPN_Name]}}",
       "templateType": "vpn-vedge",
       "subTemplates": [
 
-{% for subtemplate in  item.Feature_VPN[vpn] %}
-
+{% for interface in  Interface_Lists %}
         {
-          "templateId": "{{feature_template_db[subtemplate]}}",
+          "templateId": "{{feature_template_db[interface]}}",
           "templateType": "vpn-vedge-interface"
         },
 {% endfor %}
 
-      ]
+        ]
     },
 
 {% endfor %}
 
+{% endfor %}
     {
-      "templateId": "{{feature_template_db[Feature_Banner]}}",
+      "templateId": "{{feature_template_db[item.Feature_Banner]}}",
       "templateType": "banner"
     },
     {
-      "templateId": "{{feature_template_db[Feature_SNMP]}}",
+      "templateId": "{{feature_template_db[item.Feature_SNMP]}}",
       "templateType": "snmp"
     }
   ]
