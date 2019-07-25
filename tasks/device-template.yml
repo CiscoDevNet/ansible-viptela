@@ -1,0 +1,65 @@
+- name: Clean rendered templates
+  file:
+    path: "{{item}}"
+    state: absent
+    force: true
+  run_once: True
+  with_fileglob:
+    - "{{role_path}}/files/rendered_device_template/*"
+
+#- vmanage_feature_template_facts:
+#    user: "admin"
+#    host: "10.10.20.90:8443"
+#    password: "admin"
+#    factory_default: yes
+#  register: template_facts
+
+#- debug:
+#    var: template_facts
+
+#- set_fact:
+#    feature_template_db: "{{ feature_template_db|default({}) | combine( {item.templateName: item.templateId } ) }}"
+#  no_log: True
+#  with_items: "{{ template_facts.feature_templates }}"
+
+#- debug:
+#    msg: "{{ feature_template_db }}"
+
+- name: Render template
+  template: src='simple-device-template.j2' dest={{role_path}}/files/rendered_device_templates/{{ item.Device_Template_Name }}.json
+  when: item.State  != "Ignore" and item.State  != "Absent"
+  with_items: "{{ Device_Templates }}"
+
+- name: Loading templates from filesystem
+  set_fact:
+    device_template: "{{lookup('file', '{{item}}') }}"
+  with_fileglob:
+     - "{{role_path}}/files/rendered_device_templates/*.json"
+  register: device_template_registered_list
+
+- name: Creating a list of templates
+  set_fact:
+    device_template_list: "{{ device_template_registered_list.results | map(attribute = 'ansible_facts.device_template') | list }}"
+
+- name: Creating a list of templates to be removed
+  set_fact:
+    absent_template_list: []
+  no_log: True
+
+- name: Creating a list of templates to be removed
+  set_fact:
+    absent_template_list: "{{ absent_template_list|default([]) + [ {'templateName': item.name } ] }}"
+  when: item.State  == "Absent"
+  with_items: "{{ Device_Templates }}"
+
+- debug:
+    var: device_template_list
+
+- name: Interact with the vManage to create templates
+  vmanage_device_template:
+    user: "admin"
+    host: "10.10.20.90:8443"
+    password: "admin"
+    state: present
+    aggregate: "{{device_template_list}}"
+  when: device_template_list
