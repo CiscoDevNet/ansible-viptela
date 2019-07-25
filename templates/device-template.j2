@@ -1,0 +1,68 @@
+{
+  "templateName": "{{ item.Device_Template_Name }}",
+  "templateDescription": "{{ item.Device_Template_Description }}",
+  "deviceType": "vedge-cloud",
+  "configType": "template",
+  "factoryDefault": false,
+  "policyId": "",
+  "featureTemplateUidRange": [],
+  "connectionPreferenceRequired": true,
+  "connectionPreference": true,
+  "generalTemplates": [
+    {
+      "templateId": "{{feature_template_db[item.Feature_AAA]}}",
+      "templateType": "aaa"
+    },
+    {
+      "templateId": "{{feature_template_db[item.Feature_BFD]}}",
+      "templateType": "bfd-vedge"
+    },
+    {
+      "templateId": "{{feature_template_db[item.Feature_OMP]}}",
+      "templateType": "omp-vedge"
+    },
+    {
+      "templateId": "{{feature_template_db[item.Feature_Security]}}",
+      "templateType": "security-vedge"
+    },
+    {
+      "templateId": "{{feature_template_db[item.Feature_System]}}",
+      "templateType": "system-vedge",
+      "subTemplates": [
+        {
+          "templateId": "{{feature_template_db[item.Feature_Logging]}}",
+          "templateType": "logging"
+        }
+      ]
+    },
+
+{% for vpn in  item.Feature_VPN  %}
+
+    {
+      "templateId": "{{feature_template_db[vpn]}}",
+      "templateType": "vpn-vedge",
+      "subTemplates": [
+
+{% for subtemplate in  item.Feature_VPN[vpn] %}
+
+        {
+          "templateId": "{{feature_template_db[subtemplate]}}",
+          "templateType": "vpn-vedge-interface"
+        },
+{% endfor %}
+
+      ]
+    },
+
+{% endfor %}
+
+    {
+      "templateId": "{{feature_template_db[Feature_Banner]}}",
+      "templateType": "banner"
+    },
+    {
+      "templateId": "{{feature_template_db[Feature_SNMP]}}",
+      "templateType": "snmp"
+    }
+  ]
+}
