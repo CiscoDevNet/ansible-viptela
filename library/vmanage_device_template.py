@@ -103,6 +103,7 @@ def run_module():
                     #
                     if payload['configType'] == 'template':
                         payload['generalTemplates'] = viptela.generalTemplates_to_id(device_template['generalTemplates'])
+                        #payload['generalTemplates'] = device_template['generalTemplates']
                     viptela.request('/dataservice/template/device/feature', method='POST', payload=payload)
                 viptela.result['changed'] = True
         else:
