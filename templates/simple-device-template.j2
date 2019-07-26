@@ -1,7 +1,7 @@
 {
-  "templateName": "{{ item.Device_Template_Name }}",
-  "templateDescription": "{{ item.Device_Template_Description }}",
-  "deviceType": "vedge-cloud",
+  "templateName": "{{ item["templateName"] }}",
+  "templateDescription": "{{ item["templateDescription"] }}",
+  "deviceType": "{{ item["deviceType"] }}",
   "configType": "template",
   "factoryDefault": false,
   "policyId": "",
@@ -10,47 +10,52 @@
   "connectionPreference": true,
   "generalTemplates": [
     {
-      "templateName": "{{item.Feature_AAA}}",
+      "templateName": "{{item["aaa"]}}",
       "templateType": "aaa"
     },
     {
-      "templateName": "{{item.Feature_BFD}}",
+      "templateName": "{{item["bfd-vedge"]}}",
       "templateType": "bfd-vedge"
     },
     {
-      "templateName": "{{item.Feature_OMP}}",
+      "templateName": "{{item["omp-vedge"]}}",
       "templateType": "omp-vedge"
     },
     {
-      "templateName": "{{item.Feature_Security}}",
+      "templateName": "{{item["security-vedge"]}}",
       "templateType": "security-vedge"
     },
     {
-      "templateName": "{{item.Feature_System}}",
+      "templateName": "{{item["system-vedge"]}}",
       "templateType": "system-vedge",
       "subTemplates": [
         {
-          "templateName": "{{item.Feature_Logging}}",
+          "templateName": "{{item["logging"]}}",
           "templateType": "logging"
         }
       ]
     },
-{% for VPN_Section in  item.Feature_VPN  %}
+{% for VPN_Section in  item["vpn-vedge"]  %}
 {% for VPN_Name,Interface_Lists in  VPN_Section.items()  %}
 {# This second for loop is only used to unpack dict in a key/value pair#}
+{% set subTemplates = [] %}
+{% for interface in Interface_Lists %}
+{{ subTemplates.append({'templateName': interface ,'templateType':'vpn-vedge-interface'}) }}
+{% endfor %}
 {% set vpnsection = {'templateName': VPN_Name,
                      "templateType": "vpn-vedge",
-                     "subTemplates": [Interface_Lists]}
+                     "subTemplates": subTemplates
+                     }
 %}
 {{vpnsection |  tojson(indent=2) }},
 {% endfor %}
 {% endfor %}
     {
-      "templateName": "{{item.Feature_Banner}}",
+      "templateName": "{{item["banner"]}}",
       "templateType": "banner"
     },
     {
-      "templateName": "{{item.Feature_SNMP}}",
+      "templateName": "{{item["snmp"]}}",
       "templateType": "snmp"
     }
   ]
