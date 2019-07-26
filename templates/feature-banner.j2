@@ -1,6 +1,6 @@
 {
-   "templateName":"{{ item.name }}",
-   "templateDescription": "{{ item.description }}",
+   "templateName":"{{ item["templateName"] }}",
+   "templateDescription": "{{ item["templateDescription"] }}",
    "templateType":"banner",
    "deviceType":[
       "vedge-5000",
@@ -20,29 +20,29 @@
       "login":{
          "vipObjectType":"object",
 {% if 'login' in item %}
-{% if 'variableName' in item.login %}
+{% if 'variableName' in item["login"] %}
          "vipType":"variableName",
-         "vipVariableName":"{{ item.login.variableName }}"
+         "vipVariableName":"{{ item["login"]["variableName"] }}"
 {% else %}
          "vipType":"constant",
-         "vipValue": "{{ item.login }}",
+         "vipValue": "{{ item["login"] }}"
 {% endif %}
 {% else %}
-         "vipType":"ignore",
+         "vipType":"ignore"
 {% endif %}
       },
       "motd":{
          "vipObjectType":"object",
 {% if 'motd' in item %}
-{% if 'variableName' in item.motd %}
+{% if 'variableName' in item["motd"] %}
          "vipType":"variableName",
-         "vipVariableName":"{{ item.motd.variableName }}"
+         "vipVariableName":"{{ item["motd"]["variableName"] }}"
 {% else %}
          "vipType":"constant",
-         "vipValue": "{{ item.motd }}",
+         "vipValue": "{{ item["motd"] }}"
 {% endif %}
 {% else %}
-         "vipType":"ignore",
+         "vipType":"ignore"
 {% endif %}
       }
    }
