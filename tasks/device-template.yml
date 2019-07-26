@@ -26,8 +26,8 @@
 #    msg: "{{ feature_template_db }}"
 
 - name: Render template
-  template: src='simple-device-template.j2' dest={{role_path}}/files/rendered_device_templates/{{ item.Device_Template_Name }}.json
-  when: item.State  != "Ignore" and item.State  != "Absent"
+  template: src='simple-device-template.j2' dest={{role_path}}/files/rendered_device_templates/{{ item.templateName }}.json
+  when: item.state  != "ignore" and item.state  != "absent"
   with_items: "{{ Device_Templates }}"
 
 - name: Loading templates from filesystem
@@ -48,8 +48,8 @@
 
 - name: Creating a list of templates to be removed
   set_fact:
-    absent_template_list: "{{ absent_template_list|default([]) + [ {'templateName': item.name } ] }}"
-  when: item.State  == "Absent"
+    absent_template_list: "{{ absent_template_list|default([]) + [ {'templateName': item.templateName } ] }}"
+  when: item.state  == "absent"
   with_items: "{{ Device_Templates }}"
 
 - debug:
@@ -58,8 +58,17 @@
 - name: Interact with the vManage to create templates
   vmanage_device_template:
     user: "admin"
-    host: "10.10.20.90:8443"
+    host: "{{ansible_host}}:{{ansible_port}}"
     password: "admin"
     state: present
     aggregate: "{{device_template_list}}"
   when: device_template_list
+
+- name: Interact with the vManage to create templates
+  vmanage_device_template:
+    user: "admin"
+    host: "{{ansible_host}}:{{ansible_port}}"
+    password: "admin"
+    state: absent
+    aggregate: "{{absent_template_list}}"
+  when: absent_template_list
