@@ -37,6 +37,7 @@
     },
 {% for VPN_Section in  item.Feature_VPN  %}
 {% for VPN_Name,Interface_Lists in  VPN_Section.items()  %}
+{# This second for loop is only used to unpack dict in a key/value pair#}
 {% set vpnsection = {'templateName': VPN_Name,
                      "templateType": "vpn-vedge",
                      "subTemplates": [Interface_Lists]}
