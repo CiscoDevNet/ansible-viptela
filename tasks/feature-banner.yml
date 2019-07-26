@@ -1,69 +1,9 @@
-- name: Clean rendered templates
-  file:
-    path: "{{item}}"
-    state: absent
-    force: true
+- import_tasks: generic-feature-template.yml
+  tags: banner,rendering,banner:rendering
   run_once: True
-  with_fileglob:
-    - "{{role_path}}/files/rendered_templates/*"
+  vars:
+    loop_over: "{{ Feature_Templates['Banner_Templates'] }}"
+    template: feature-banner.j2
+    folder: feature-banner
+  when: Feature_Templates['Banner_Templates'] is defined
 
-- name: Render template
-  template: src='feature-banner.j2' dest={{role_path}}/files/rendered_templates/{{ item.name }}.json
-  when: item.State  != "Ignore" and item.State  != "Absent"
-  with_items: "{{ Feature_Templates['Banner_Templates'] }}"
-
-# reference here: https://stackoverflow.com/questions/29399581/using-set-facts-and-with-items-together-in-ansible
-
-- name: Loading templates from filesystem
-  set_fact:
-    feature_banner: "{{lookup('file', '{{item}}') }}"
-  with_fileglob:
-     - "{{role_path}}/files/rendered_templates/*.json"
-  register: feature_banner_registered_list
-
-- name: Creating a list of templates
-  set_fact:
-    feature_banner_list: "{{ feature_banner_registered_list.results | map(attribute = 'ansible_facts.feature_banner') | list }}"
-
-- name: Creating a list of templates to be removed
-  set_fact:
-    absent_template_list: []
-  no_log: True
-
-- name: Creating a list of templates to be removed
-  set_fact:
-    absent_template_list: "{{ absent_template_list|default([]) + [ {'templateName': item.name } ] }}"
-  when: item.State  == "Absent"
-  with_items: "{{ Feature_Templates['Banner_Templates'] }}"
-
-#- vmanage_feature_template:
-#    user: "admin"
-#    host: "localhost:8443"
-#    password: "admin"
-#    state: present
-#    name: "{{ item.templateName }}"
-#    description: "{{ item.templateDescription }}"
-#    definition: "{{ item.templateDefinition }}"
-#    template_type: "{{ item.templateType }}"
-#    device_type: "{{ item.deviceType }}"
-#    template_min_version:  "{{ item.templateMinVersion }}"
-#    factory_default: "{{ item.factoryDefault }}"
-#  loop: "{{feature_banner_list}}"
-
-- name: Interact with the vManage to create templates
-  vmanage_feature_template:
-    user: "admin"
-    host: "localhost:8443"
-    password: "admin"
-    state: present
-    aggregate: "{{feature_banner_list}}"
-  when: feature_banner_list
-
-- name: Interact with the vManage to delete templates
-  vmanage_feature_template:
-    user: "admin"
-    host: "localhost:8443"
-    password: "admin"
-    state: absent
-    aggregate: "{{absent_template_list}}"
-  when: absent_template_list
