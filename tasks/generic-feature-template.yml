@@ -16,6 +16,15 @@
 #
 #There are also tasks that create a list of templates with the state absent. We finally pass this list to the ansible module.
 
+- name: Making sure appropiate directories are there
+  file:
+    path: "{{item}}"
+    state: directory
+  run_once: True
+  with_items:
+    - "{{role_path}}/files/rendered_templates/"
+    - "{{role_path}}/files/rendered_templates/{{ folder }}"
+
 - name: Clean rendered templates
   file:
     path: "{{item}}"
