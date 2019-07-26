@@ -1,3 +1,12 @@
+- name: Making sure appropiate directories are there
+  file:
+    path: "{{item}}"
+    state: directory
+  run_once: True
+  with_items:
+    - "{{role_path}}/files/rendered_templates/"
+    - "{{role_path}}/files/rendered_templates/device-template"
+
 - name: Clean rendered templates
   file:
     path: "{{item}}"
@@ -5,7 +14,7 @@
     force: true
   run_once: True
   with_fileglob:
-    - "{{role_path}}/files/rendered_device_template/*"
+    - "{{role_path}}/files/rendered_templates/*"
 
 #- vmanage_feature_template_facts:
 #    user: "admin"
@@ -26,7 +35,7 @@
 #    msg: "{{ feature_template_db }}"
 
 - name: Render template
-  template: src='simple-device-template.j2' dest={{role_path}}/files/rendered_device_templates/{{ item.templateName }}.json
+  template: src='simple-device-template.j2' dest={{role_path}}/files/rendered_templates/device-template/{{ item.templateName }}.json
   when: item.state  != "ignore" and item.state  != "absent"
   with_items: "{{ Device_Templates }}"
 
@@ -34,7 +43,7 @@
   set_fact:
     device_template: "{{lookup('file', '{{item}}') }}"
   with_fileglob:
-     - "{{role_path}}/files/rendered_device_templates/*.json"
+     - "{{role_path}}/files/rendered_templates/device-template/*.json"
   register: device_template_registered_list
 
 - name: Creating a list of templates
