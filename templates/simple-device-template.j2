@@ -35,28 +35,14 @@
         }
       ]
     },
-
 {% for VPN_Section in  item.Feature_VPN  %}
-
 {% for VPN_Name,Interface_Lists in  VPN_Section.items()  %}
-
-    {
-      "templateName": "{{VPN_Name}}",
-      "templateType": "vpn-vedge",
-      "subTemplates": [
-
-{% for interface in  Interface_Lists %}
-        {
-          "templateName": "{{interface}}",
-          "templateType": "vpn-vedge-interface"
-        },
+{% set vpnsection = {'templateName': VPN_Name,
+                     "templateType": "vpn-vedge",
+                     "subTemplates": [Interface_Lists]}
+%}
+{{vpnsection |  tojson(indent=2) }},
 {% endfor %}
-
-        ]
-    },
-
-{% endfor %}
-
 {% endfor %}
     {
       "templateName": "{{item.Feature_Banner}}",
