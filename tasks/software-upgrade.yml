@@ -1,0 +1,74 @@
+- name: Get list of current software (only for debug)
+  vmanage_software_facts:
+    user: "{{ansible_user}}"
+    host: "{{ansible_host}}:{{ansible_port}}"
+    password: "{{ansible_password}}"
+  register: software_facts
+
+- debug:
+    var: software_facts
+
+
+#- name: Upload the file image if does not exists
+#  vmanage_software_upload:
+#    user: "{{ansible_user}}"
+#    host: "{{ansible_host}}:{{ansible_port}}"
+#    password: "{{ansible_password}}"
+#    state: present
+#    file: "{{role_path}}/files/software/viptela-18.3.7-x86_64.tar.gz"
+
+
+#- name: Upload the file image if does not exists
+#  vmanage_software_upload:
+#    user: "{{ansible_user}}"
+#    host: "{{ansible_host}}:{{ansible_port}}"
+#    password: "{{ansible_password}}"
+#    state: present
+#    file: "{{role_path}}/files/software/viptela-18.3.7-x86_64.tar.gz"
+#  ignore_errors: yes
+
+- name: Upload the file image if does not exists (Aggregate)
+  vmanage_software_upload:
+    user: "{{ansible_user}}"
+    host: "{{ansible_host}}:{{ansible_port}}"
+    password: "{{ansible_password}}"
+    state: present
+    aggregate:
+      - file: "{{role_path}}/files/software/viptela-18.3.7-x86_64.tar.gz"
+      - file: "{{role_path}}/files/software/viptela-18.3.6-x86_64.tar.gz"
+
+#- name: Upload the file image if does not exists (Aggregate)
+#  vmanage_software_upload:
+#    user: "{{ansible_user}}"
+#    host: "{{ansible_host}}:{{ansible_port}}"
+#    password: "{{ansible_password}}"
+#    state: present
+#    aggregate:
+#      - file: "{{role_path}}/files/software/viptela-18.3.7-x86_64.tar.gz"
+#      - file: "{{role_path}}/files/software/viptela-18.3.7-x86_64.tar.gz"
+#      - file: "{{role_path}}/files/software/viptela-18.2222223.7-x86_64.tar.gz"
+#      - file: "{{role_path}}/files/software/viptela-18.3.7-x86_64.tar.gz"
+#  ignore_errors: yes
+
+
+#- name: Software upgrade
+#  vmanage_device_install:
+#    user: "{{ansible_user}}"
+#    host: "{{ansible_host}}:{{ansible_port}}"
+#    password: "{{ansible_password}}"
+#    software:
+#    aggregate:
+
+
+- name: Software install
+  vmanage_software_upgrade:
+    user: "{{ansible_user}}"
+    host: "{{ansible_host}}:{{ansible_port}}"
+    password: "{{ansible_password}}"
+    devices:
+      - deviceIP: "1.1.1.2"
+        deviceId: "5b3c6307-cfff-431c-ae5a-d30814055071"
+    deviceType: controller
+    activate: true
+    set_default: true
+    version: 18.3.7
