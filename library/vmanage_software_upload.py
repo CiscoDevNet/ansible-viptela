@@ -5,7 +5,8 @@ ANSIBLE_METADATA = {
     'status': ['preview'],
     'supported_by': 'community'
 }
-
+#### CAN WE DO THIS ????
+import os
 from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.viptela import viptelaModule, viptela_argument_spec
 from collections import OrderedDict
@@ -15,7 +16,7 @@ def run_module():
     argument_spec = viptela_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
                          file=dict(type='str'),
-                         aggregate=dict(type='list'),
+                         aggregate=dict(type='list')
                          )
 
     # seed the result dict in the object
@@ -36,15 +37,64 @@ def run_module():
                            )
     viptela = viptelaModule(module)
 
-    if not module.check_mode:
-        response = viptela.request('/dataservice/device/action/software/package', method='POST',
-                                   files={'file': open(module.params['file'], 'rb')},
-                                   data={'validity':'valid', 'upload':'true'},
-                                   headers=None)
 
-        viptela.result['msg'] = response.json['vedgeListUploadStatus']
-        if 'successfully' in response.json['vedgeListUploadStatus']:
-            viptela.result['changed'] = True
+    if viptela.params['aggregate']:
+        upload_software_list = viptela.params['aggregate']
+    else:
+        upload_software_list = [
+            {
+                'file': module.params['file']
+            }
+        ]
+
+
+    # THIS MODULE IS DESIGNED TO UPLOAD UPGRADE IMAGES TO THE VMANAGE
+    # Software in SD-WAN varies depending on what you want to upgrade.
+    # This is a complication for what concern idempotency of this module
+    # Files to upgrade vmanage will look like: vmanage-XX.YY.ZZ-<platform>.tar.gz
+    # Files to upgrade vedge cloud/vedge 5k/vbond/vsmart will look like: viptela-XX.YY.ZZ-<platform>.tar.gz
+    # Physical appliances will NOT have incremental upgrade images
+    # CISCO Physical appliances will be upgraded via a new .bin file
+    # VIPTELA Physical appliances will be upgraded via a new .tar.gz file
+
+    viptela.result['changed'] = False
+
+    vManage_software_list = viptela.get_software_images_list()
+
+    if viptela.params['state'] == 'present':
+
+        for software_to_upload in upload_software_list:
+
+            try:
+                present = False
+                path_software_to_be_uploaded = software_to_upload['file']
+
+                if not os.path.exists(path_software_to_be_uploaded):
+                    module.fail_json(
+                        msg="File does not exists")
+
+                filename_software_to_be_uploaded = os.path.basename(path_software_to_be_uploaded)
+
+                for software in vManage_software_list:
+                    availabe_files_list = software["availableFiles"].split(', ')
+                    if filename_software_to_be_uploaded in availabe_files_list:
+                        present = True
+
+
+                if not module.check_mode and not present:
+                    response = viptela.request('/dataservice/device/action/software/package', method='POST',
+                                               files={'file': open(path_software_to_be_uploaded, 'rb')},
+                                               data={'validity':'valid', 'upload':'true'},
+                                               headers=None)
+
+                    viptela.result['changed'] = True
+            except:
+                module.fail_json(
+                    msg="General Error")
+
+    else:
+        # absent to be added
+        pass
 
     viptela.exit_json(**viptela.result)
 
