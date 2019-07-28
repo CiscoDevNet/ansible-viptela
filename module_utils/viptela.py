@@ -420,6 +420,66 @@ class viptelaModule(object):
 
         return return_dict
 
+    def get_software_images_list(self):
+        response = self.request('/dataservice/device/action/software/images', method='GET')
+
+        if response.json:
+            return response.json['data']
+        else:
+            return []
+
+    def get_installed_software(self,type):
+        response = self.request('/dataservice/device/action/install/devices/{0}?groupId=all'.format(type), method='GET')
+
+        if response.json:
+            return response.json['data']
+        else:
+            return []
+
+    def software_install(self,devices,deviceType,data,reboot):
+
+        payload= {
+            "action":"install",
+            "input":{
+                "vEdgeVPN":0,
+                "vSmartVPN":0,
+                "data": data,
+                "versionType":"vmanage",
+                "reboot":reboot,
+                "sync": True
+            },
+            "devices": devices,
+            "deviceType": deviceType
+        }
+
+        response = self.request('/dataservice/device/action/install', method='POST', payload=payload)
+
+        if response.json and 'id' in response.json:
+            self.waitfor_action_completion(response.json['id'])
+        else:
+            self.fail_json(
+                msg='Did not get action ID after installing software.')
+
+        return response.json['id']
+
+    def set_default_partition(self,devices,deviceType):
+
+        payload= {
+            "action":"defaultpartition",
+            "devices": devices,
+            "deviceType": deviceType
+        }
+
+        response = self.request('/dataservice/device/action/defaultpartition', method='POST', payload=payload)
+
+        if response.json and 'id' in response.json:
+            self.waitfor_action_completion(response.json['id'])
+        else:
+            self.fail_json(
+                msg='Did not get action ID after setting default image.')
+
+        return response.json['id']
+
     def reattach_device_template(self, template_id):
         device_list = self.get_template_attachments(template_id, key='uuid')
         # First, we need to get the input to feed to the re-attach
@@ -464,6 +524,10 @@ class viptelaModule(object):
                     action_status = response.json['data'][0]['statusId']
                     action_activity = response.json['data'][0]['activity']
                     action_config = response.json['data'][0]['actionConfig']
+                else:
+                    #This also maps to a conflict condition. e.g. software
+                    #FIXME Better understand when this happens
+                    self.fail_json(msg="No data in response.json")
             else:
                 self.fail_json(msg="Unable to get action status: No response")
             time.sleep(10)
