@@ -1,11 +1,14 @@
 - name: Get list of current software (only for debug)
+  tags: check
   vmanage_software_facts:
     user: "{{ansible_user}}"
     host: "{{ansible_host}}:{{ansible_port}}"
     password: "{{ansible_password}}"
   register: software_facts
 
-- debug:
+- name: Debug
+  tags: check
+  debug:
     var: software_facts
 
 
@@ -36,7 +39,9 @@
     aggregate:
       - file: "{{role_path}}/files/software/viptela-18.3.7-x86_64.tar.gz"
       - file: "{{role_path}}/files/software/viptela-18.3.6-x86_64.tar.gz"
-
+#      - file: "{{role_path}}/files/software/viptela-18.3.5-x86_64.tar.gz"
+#      - file: "{{role_path}}/files/software/viptela-19.1.0-x86_64.tar.gz"
+#      - file: "{{role_path}}/files/software/viptela-18.4.1-x86_64.tar.gz"
 #- name: Upload the file image if does not exists (Aggregate)
 #  vmanage_software_upload:
 #    user: "{{ansible_user}}"
@@ -60,15 +65,32 @@
 #    aggregate:
 
 
+#- name: Software install
+#  vmanage_software_upgrade:
+#    user: "{{ansible_user}}"
+#    host: "{{ansible_host}}:{{ansible_port}}"
+#    password: "{{ansible_password}}"
+#    devices:
+#      - deviceIP: "1.1.1.2"
+#        deviceId: "5b3c6307-cfff-431c-ae5a-d30814055071"
+#    deviceType: controller
+#    activate: false
+#    set_default: false
+#    version: 18.3.6
+
+
+
 - name: Software install
   vmanage_software_upgrade:
     user: "{{ansible_user}}"
     host: "{{ansible_host}}:{{ansible_port}}"
     password: "{{ansible_password}}"
     devices:
-      - deviceIP: "1.1.1.2"
-        deviceId: "5b3c6307-cfff-431c-ae5a-d30814055071"
-    deviceType: controller
+      - deviceIP: "4.4.4.65"
+        deviceId: "46c18a49-f6f3-4588-a49a-0b1cc387f179"
+      - deviceIP: "4.4.4.60"
+        deviceId: "100faff9-8b36-4312-bf97-743b26bd0211"
+    deviceType: vedge
     activate: true
     set_default: true
-    version: 18.3.7
+    version: 18.3.6
