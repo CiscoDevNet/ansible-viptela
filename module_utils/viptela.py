@@ -421,7 +421,8 @@ class viptelaModule(object):
         return return_dict
 
     def get_software_images_list(self):
-        response = self.request('/dataservice/device/action/software/images', method='GET')
+        #TODO undertand the difference with the URL: /dataservice/device/action/software/images used in devnetsandbox
+        response = self.request('/dataservice/device/action/software', method='GET')
 
         if response.json:
             return response.json['data']
