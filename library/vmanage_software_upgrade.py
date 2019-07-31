@@ -14,7 +14,7 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
     argument_spec.update(devices=dict(type='list'),
-                         deviceType=dict(type='str'),
+                         deviceType=dict(type='str', choices=['controller', 'vedge'], default='vedge'),
                          version=dict(type='str'),
                          activate=dict(type='bool'),
                          set_default=dict(type='bool')
