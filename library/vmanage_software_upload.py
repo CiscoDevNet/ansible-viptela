@@ -88,9 +88,9 @@ def run_module():
                                                headers=None)
 
                     viptela.result['changed'] = True
-            except:
+            except Exception as e:
                 module.fail_json(
-                    msg="General Error")
+                    msg="General Error {0}".format(e))
 
     else:
         # absent to be added
