@@ -90,6 +90,10 @@
         deviceId: "46c18a49-f6f3-4588-a49a-0b1cc387f179"
       - deviceIP: "4.4.4.60"
         deviceId: "100faff9-8b36-4312-bf97-743b26bd0211"
+      - deviceIP: "4.4.4.61"
+        deviceId: "f3d4159b-4172-462c-9c8d-8db76c31521d"
+      - deviceIP: "4.4.4.64"
+        deviceId: "0435c3e8-d3a0-4c6b-af0a-f95d41974d69"
     deviceType: vedge
     activate: true
     set_default: true
