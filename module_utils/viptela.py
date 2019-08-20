@@ -135,7 +135,12 @@ class viptelaModule(object):
         self.status_code = response.status_code
         self.status = requests.status_codes._codes[response.status_code][0]
 
-        if self.status_code >= 300 or self.status_code < 0:
+        if self.status_code == 404:
+            # TODO Need to understand what to do when we target an URL that does not exists
+            # This case raised from: https://github.com/CiscoDevNet/sdwan-ops/issues/2 that
+            # was then handled in https://github.com/CiscoDevNet/ansible-viptela/issues/11
+            pass
+        elif self.status_code >= 300 or self.status_code < 0:
             try:
                 decoded_response = response.json()
                 details = decoded_response['error']['details']
@@ -277,13 +282,19 @@ class viptelaModule(object):
         else:
             response = self.request('/dataservice/template/policy/list/{0}'.format(type.lower()))
 
-        return response.json['data']
+        if response.json:
+            return response.json['data']
+        else:
+            return []
 
     def get_policy_list_dict(self, type, key_name='name', remove_key=False):
 
         policy_list = self.get_policy_list_list(type)
 
-        return self.list_to_dict(policy_list, key_name, remove_key=remove_key)
+        if policy_list:
+            return self.list_to_dict(policy_list, key_name=key_name, remove_key=remove_key)
+        else:
+            return {}
 
     def get_policy_definition(self, type, definition_id):
         response = self.request('/dataservice/template/policy/definition/{0}/{1}'.format(type, definition_id))
@@ -292,13 +303,19 @@ class viptelaModule(object):
     def get_policy_definition_list(self, type):
         response = self.request('/dataservice/template/policy/definition/{0}'.format(type))
 
-        return response.json['data']
+        if response.json:
+            return response.json['data']
+        else:
+            return []
 
     def get_policy_definition_dict(self, type, key_name='name', remove_key=False):
 
         policy_definition_list = self.get_policy_definition_list(type)
 
-        return self.list_to_dict(policy_definition_list, key_name, remove_key=remove_key)
+        if policy_definition_list:
+            return self.list_to_dict(policy_definition_list, key_name=key_name, remove_key=remove_key)
+        else:
+            return {}
 
     def get_central_policy_list(self):
         response = self.request('/dataservice/template/policy/vsmart')
