@@ -1,0 +1,9 @@
+- import_tasks: generic-feature-template.yml
+  tags: banner,rendering,banner:rendering
+  run_once: True
+  vars:
+    template_list: "{{ Feature_Templates['Banner_Templates'] }}"
+    template: feature-banner.j2
+    folder: feature-banner
+  when: Feature_Templates['Banner_Templates'] is defined
+
