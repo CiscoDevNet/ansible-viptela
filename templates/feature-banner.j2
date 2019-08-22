@@ -25,7 +25,7 @@
          "vipVariableName":"{{ item["login"]["variableName"] }}"
 {% else %}
          "vipType":"constant",
-         "vipValue": "{{ item["login"] }}"
+         "vipValue": "{{ item["login"]["globalValue"] }}"
 {% endif %}
 {% else %}
          "vipType":"ignore"
@@ -39,7 +39,7 @@
          "vipVariableName":"{{ item["motd"]["variableName"] }}"
 {% else %}
          "vipType":"constant",
-         "vipValue": "{{ item["motd"] }}"
+         "vipValue": "{{ item["motd"]["globalValue"] }}"
 {% endif %}
 {% else %}
          "vipType":"ignore"
