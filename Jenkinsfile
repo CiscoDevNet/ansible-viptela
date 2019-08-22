@@ -38,14 +38,14 @@ pipeline {
                 checkout([$class: 'GitSCM',
                     branches: [[name: '*/master']],
                     doGenerateSubmoduleConfigurations: false,
-                    extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'roles']],
+                    extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'roles/ansible-virl']],
                     submoduleCfg: [],
                     userRemoteConfigs: [[url: 'https://github.com/ciscodevnet/ansible-virl']]
                 ])
                 checkout([$class: 'GitSCM',
                     branches: scm.branches,
                     doGenerateSubmoduleConfigurations: false,
-                    extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'roles']],
+                    extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'roles/ansible-viptela']],
                     submoduleCfg: [],
                     userRemoteConfigs: scm.userRemoteConfigs
                 ])                
