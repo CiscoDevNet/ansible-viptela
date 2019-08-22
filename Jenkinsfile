@@ -51,6 +51,44 @@ pipeline {
                 ])                
             }
         }
+        stage('Build VIRL Topology') {
+           steps {
+                echo 'Running build.yml...'
+                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'build.yml'
+                echo 'Configure licensing...'
+                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', extras: "-e license_token=${LICENSE_TOKEN}", playbook: 'configure-licensing.yml'
+           }
+        }
+        stage('Configure SD-WAN Fabric') {
+           steps {
+                echo 'Configure SD-WAN Fabric'
+                withCredentials([file(credentialsId: 'viptela-serial-file', variable: 'VIPTELA_SERIAL_FILE')]) {
+                    ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', extras: '-e virl_tag=jenkins -e \'organization_name="${VIPTELA_ORG}"\' -e serial_number_file=${VIPTELA_SERIAL_FILE} -e viptela_cert_dir=${WORKSPACE}/myCA', playbook: 'configure.yml'
+                }
+                echo 'Loading Templates...'
+                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'import-templates.yml'
+                echo 'Waiting for vEdges to Sync...'
+                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'waitfor-sync.yml'
+                echo 'Attaching Templates...'
+                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'attach-template.yml'
+                echo 'Loading Policy...'
+                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'import-policy.yml'
+                echo 'Activating Policy...'
+                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'activate-policy.yml'
+           }
+        }
+        stage('Running Tests') {
+           steps {
+                echo 'Check SD-WAN...'
+                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'check-sdwan.yml'
+           }
+        }      
+    }    
+    post {
+        always {
+            ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'clean.yml'
+            /* cleanWs() */
+        }
     }          
 }
 
