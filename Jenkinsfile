@@ -65,10 +65,10 @@ pipeline {
                 withCredentials([file(credentialsId: 'viptela-serial-file', variable: 'VIPTELA_SERIAL_FILE')]) {
                     ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', extras: '-e virl_tag=jenkins -e \'organization_name="${VIPTELA_ORG}"\' -e serial_number_file=${VIPTELA_SERIAL_FILE} -e viptela_cert_dir=${WORKSPACE}/myCA', playbook: 'configure.yml'
                 }
+                echo 'Waiting for vEdges to Sync...'
+                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'waitfor-sync.yml'                
                 echo 'Loading Templates...'
                 ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'import-templates.yml'
-                echo 'Waiting for vEdges to Sync...'
-                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'waitfor-sync.yml'
                 echo 'Attaching Templates...'
                 ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'attach-template.yml'
                 echo 'Loading Policy...'
