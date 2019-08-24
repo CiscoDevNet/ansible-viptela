@@ -26,6 +26,7 @@ POLICY_LIST_DICT = {
     'siteLists': 'site',
     'vpnLists': 'vpn',
 }
+VALID_STATUS_CODES = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]
 
 class viptelaModule(object):
 
@@ -118,7 +119,7 @@ class viptelaModule(object):
         self.request('/dataservice/settings/clientSessionTimeout')
         self.request('/logout')
 
-    def request(self, url_path, method='GET', headers=STANDARD_JSON_HEADER, data=None, files=None, payload=None):
+    def request(self, url_path, method='GET', headers=STANDARD_JSON_HEADER, data=None, files=None, payload=None, status_codes=VALID_STATUS_CODES):
         """Generic HTTP method for viptela requests."""
 
         self.method = method
@@ -135,18 +136,26 @@ class viptelaModule(object):
         self.status_code = response.status_code
         self.status = requests.status_codes._codes[response.status_code][0]
 
-        if self.status_code >= 300 or self.status_code < 0:
+        if self.status_code not in status_codes:
             try:
-                decoded_response = response.json()
-                details = decoded_response['error']['details']
-                error = decoded_response['error']['message']
+                decoded_response = response.json()                
+            except JSONDecodeError:
+                pass
+
+            if 'error' in decoded_response:
+                error='Unknown'
+                details='Unknown'
+                if 'details' in decoded_response['error']:
+                    details = decoded_response['error']['details']
+                if 'message' in decoded_response['error']:
+                    error = decoded_response['error']['message']
                 self.fail_json(msg='{0}: {1}'.format(error, details))
-            except JSONDecodeError as e:
+            else:
                 self.fail_json(msg=self.status)
 
         try:
             response.json = response.json()
-        except JSONDecodeError as e:
+        except JSONDecodeError:
             response.json = {}
 
         return response
@@ -273,11 +282,14 @@ class viptelaModule(object):
 
     def get_policy_list_list(self, type):
         if type == 'all':
-            response = self.request('/dataservice/template/policy/list')
+            response = self.request('/dataservice/template/policy/list', status_codes=[200, 404])
         else:
-            response = self.request('/dataservice/template/policy/list/{0}'.format(type.lower()))
+            response = self.request('/dataservice/template/policy/list/{0}'.format(type.lower()), status_codes=[200, 404])
 
-        return response.json['data']
+        if response.status_code == 404:
+            return []
+        else:
+            return response.json['data']
 
     def get_policy_list_dict(self, type, key_name='name', remove_key=False):
 
