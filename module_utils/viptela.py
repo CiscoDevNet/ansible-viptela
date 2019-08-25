@@ -328,7 +328,7 @@ class viptelaModule(object):
         except:
             return {'vbond': None, 'vbond_port': None}
 
-    def set_vmanage_vbond(self, vbond, vbond_port=12346):
+    def set_vmanage_vbond(self, vbond, vbond_port='12346'):
         payload = {'domainIp': vbond, 'port': vbond_port}
         response = self.request('/dataservice/settings/configuration/device', method='POST', payload=payload)
 
@@ -341,8 +341,8 @@ class viptelaModule(object):
         except:
             return None
 
-    def set_vmanage_ca_type(self, type, challenge_available=False):
-        payload = {'certificateSigning': type, 'challengeAvailable': challenge_available}
+    def set_vmanage_ca_type(self, type):
+        payload = {'certificateSigning': type, 'challengeAvailable': 'false'}
         response = self.request('/dataservice/settings/configuration/certificate',method='POST', payload=payload)
         return
 
@@ -484,6 +484,14 @@ class viptelaModule(object):
 
         return return_dict
 
+    def push_certificates(self):
+        response = self.request('/dataservice/certificate/vedge/list?action=push', method='POST')
+        if response.json and 'id' in response.json:
+            self.waitfor_action_completion(response.json['id'])
+        else:
+            self.fail_json(msg='Did not get action ID after attaching device to template.')
+        return response.json['id']
+
     def reattach_device_template(self, template_id):
         device_list = self.get_template_attachments(template_id, key='uuid')
         # First, we need to get the input to feed to the re-attach
@@ -527,7 +535,10 @@ class viptelaModule(object):
                 if 'data' in response.json and response.json['data']:
                     action_status = response.json['data'][0]['statusId']
                     action_activity = response.json['data'][0]['activity']
-                    action_config = response.json['data'][0]['actionConfig']
+                    if 'actionConfig' in response.json['data'][0]:
+                        action_config = response.json['data'][0]['actionConfig']
+                    else:
+                        action_config = None
             else:
                 self.fail_json(msg="Unable to get action status: No response")
             time.sleep(10)
