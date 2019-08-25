@@ -28,6 +28,27 @@ This role can perform the following functions:
 * `user`: Username used to log in to vManage
 * `password`: Password used to log into vManage
 
+### Set vManage Setting
+
+```yaml
+  - name: vManage Settings
+    vmanage_settings:
+      host: "{{ vmanage_ip }}"
+      user: "{{ vmanage_user }}"
+      password: "{{ vmanage_password }}"
+      organization: "{{ organization_name }}"
+      vbond: 1.2.3.4
+      ca_type: enterprise
+      root_cert: "{{lookup('file', '{{ viptela_cert_dir }}/myCA.pem')}}"
+```
+
+#### Arguments:
+* `organization`: Organization name
+* `vbond`: vBond
+* `vbond_port`: vBond port
+* `ca_type`: CA type
+* `root_cert`: CA root certificate
+
 ### Get Device Template Facts
 ```yaml
 - vmanage_device_template_facts:

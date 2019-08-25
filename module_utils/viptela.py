@@ -135,7 +135,7 @@ class viptelaModule(object):
 
         self.status_code = response.status_code
         self.status = requests.status_codes._codes[response.status_code][0]
-
+        decoded_response = {}
         if self.status_code not in status_codes:
             try:
                 decoded_response = response.json()                
@@ -305,6 +305,58 @@ class viptelaModule(object):
         response = self.request('/dataservice/template/policy/definition/{0}'.format(type))
 
         return response.json['data']
+
+    def get_vmanage_org(self):
+        response = self.request('/dataservice/settings/configuration/organization')
+        try:
+            return response.json['data'][0]['org']
+        except:
+            return None
+
+    def set_vmanage_org(self, org):
+        payload = {'org': org}
+        response = self.request('/dataservice/settings/configuration/organization',method='POST', payload=payload)
+
+        return response.json['data']
+         
+    def get_vmanage_vbond(self):
+        response = self.request('/dataservice/settings/configuration/device')
+        vbond = None
+        vbond_port = None
+        try:
+            return {'vbond': response.json['data'][0]['domainIp'], 'vbond_port': response.json['data'][0]['port']}
+        except:
+            return {'vbond': None, 'vbond_port': None}
+
+    def set_vmanage_vbond(self, vbond, vbond_port=12346):
+        payload = {'domainIp': vbond, 'port': vbond_port}
+        response = self.request('/dataservice/settings/configuration/device', method='POST', payload=payload)
+
+        return    
+
+    def get_vmanage_ca_type(self):
+        response = self.request('/dataservice/settings/configuration/certificate')
+        try:
+            return response.json['data'][0]['certificateSigning']
+        except:
+            return None
+
+    def set_vmanage_ca_type(self, type, challenge_available=False):
+        payload = {'certificateSigning': type, 'challengeAvailable': challenge_available}
+        response = self.request('/dataservice/settings/configuration/certificate',method='POST', payload=payload)
+        return
+
+    def get_vmanage_root_cert(self):
+        response = self.request('/dataservice/certificate/rootcertificate')
+        try:
+            return response.json['rootcertificate']
+        except:
+            return None
+
+    def set_vmanage_root_cert(self, cert):
+        payload = {'enterpriseRootCA': cert}
+        response = self.request('/dataservice/settings/configuration/certificate/enterpriserootca', method='PUT', payload=payload)
+        return
 
     def get_policy_definition_dict(self, type, key_name='name', remove_key=False):
 
