@@ -15,7 +15,7 @@ def run_module():
     argument_spec = viptela_argument_spec()
     argument_spec.update(organization=dict(type='str'),
                          vbond=dict(type='str'),
-                         vbond_port=dict(type='int', default=12346),
+                         vbond_port=dict(type='str', default='12346'),
                          root_cert=dict(type='str'),
                          ca_type=dict(type='str')
                          )
