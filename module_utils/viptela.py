@@ -26,6 +26,7 @@ POLICY_LIST_DICT = {
     'siteLists': 'site',
     'vpnLists': 'vpn',
 }
+VALID_STATUS_CODES = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]
 
 class viptelaModule(object):
 
@@ -118,7 +119,7 @@ class viptelaModule(object):
         self.request('/dataservice/settings/clientSessionTimeout')
         self.request('/logout')
 
-    def request(self, url_path, method='GET', headers=STANDARD_JSON_HEADER, data=None, files=None, payload=None):
+    def request(self, url_path, method='GET', headers=STANDARD_JSON_HEADER, data=None, files=None, payload=None, status_codes=VALID_STATUS_CODES):
         """Generic HTTP method for viptela requests."""
 
         self.method = method
@@ -134,19 +135,27 @@ class viptelaModule(object):
 
         self.status_code = response.status_code
         self.status = requests.status_codes._codes[response.status_code][0]
-
-        if self.status_code >= 300 or self.status_code < 0:
+        decoded_response = {}
+        if self.status_code not in status_codes:
             try:
                 decoded_response = response.json()
-                details = decoded_response['error']['details']
-                error = decoded_response['error']['message']
+            except JSONDecodeError:
+                pass
+
+            if 'error' in decoded_response:
+                error='Unknown'
+                details='Unknown'
+                if 'details' in decoded_response['error']:
+                    details = decoded_response['error']['details']
+                if 'message' in decoded_response['error']:
+                    error = decoded_response['error']['message']
                 self.fail_json(msg='{0}: {1}'.format(error, details))
-            except JSONDecodeError as e:
+            else:
                 self.fail_json(msg=self.status)
 
         try:
             response.json = response.json()
-        except JSONDecodeError as e:
+        except JSONDecodeError:
             response.json = {}
 
         return response
@@ -273,11 +282,14 @@ class viptelaModule(object):
 
     def get_policy_list_list(self, type):
         if type == 'all':
-            response = self.request('/dataservice/template/policy/list')
+            response = self.request('/dataservice/template/policy/list', status_codes=[200, 404])
         else:
-            response = self.request('/dataservice/template/policy/list/{0}'.format(type.lower()))
+            response = self.request('/dataservice/template/policy/list/{0}'.format(type.lower()), status_codes=[200, 404])
 
-        return response.json['data']
+        if response.status_code == 404:
+            return []
+        else:
+            return response.json['data']
 
     def get_policy_list_dict(self, type, key_name='name', remove_key=False):
 
@@ -293,6 +305,58 @@ class viptelaModule(object):
         response = self.request('/dataservice/template/policy/definition/{0}'.format(type))
 
         return response.json['data']
+
+    def get_vmanage_org(self):
+        response = self.request('/dataservice/settings/configuration/organization')
+        try:
+            return response.json['data'][0]['org']
+        except:
+            return None
+
+    def set_vmanage_org(self, org):
+        payload = {'org': org}
+        response = self.request('/dataservice/settings/configuration/organization',method='POST', payload=payload)
+
+        return response.json['data']
+
+    def get_vmanage_vbond(self):
+        response = self.request('/dataservice/settings/configuration/device')
+        vbond = None
+        vbond_port = None
+        try:
+            return {'vbond': response.json['data'][0]['domainIp'], 'vbond_port': response.json['data'][0]['port']}
+        except:
+            return {'vbond': None, 'vbond_port': None}
+
+    def set_vmanage_vbond(self, vbond, vbond_port='12346'):
+        payload = {'domainIp': vbond, 'port': vbond_port}
+        response = self.request('/dataservice/settings/configuration/device', method='POST', payload=payload)
+
+        return
+
+    def get_vmanage_ca_type(self):
+        response = self.request('/dataservice/settings/configuration/certificate')
+        try:
+            return response.json['data'][0]['certificateSigning']
+        except:
+            return None
+
+    def set_vmanage_ca_type(self, type):
+        payload = {'certificateSigning': type, 'challengeAvailable': 'false'}
+        response = self.request('/dataservice/settings/configuration/certificate',method='POST', payload=payload)
+        return
+
+    def get_vmanage_root_cert(self):
+        response = self.request('/dataservice/certificate/rootcertificate')
+        try:
+            return response.json['rootcertificate']
+        except:
+            return None
+
+    def set_vmanage_root_cert(self, cert):
+        payload = {'enterpriseRootCA': cert}
+        response = self.request('/dataservice/settings/configuration/certificate/enterpriserootca', method='PUT', payload=payload)
+        return
 
     def get_policy_definition_dict(self, type, key_name='name', remove_key=False):
 
@@ -481,6 +545,14 @@ class viptelaModule(object):
 
         return response.json['id']
 
+    def push_certificates(self):
+        response = self.request('/dataservice/certificate/vedge/list?action=push', method='POST')
+        if response.json and 'id' in response.json:
+            self.waitfor_action_completion(response.json['id'])
+        else:
+            self.fail_json(msg='Did not get action ID after attaching device to template.')
+        return response.json['id']
+
     def reattach_device_template(self, template_id):
         device_list = self.get_template_attachments(template_id, key='uuid')
         # First, we need to get the input to feed to the re-attach
@@ -524,11 +596,10 @@ class viptelaModule(object):
                 if 'data' in response.json and response.json['data']:
                     action_status = response.json['data'][0]['statusId']
                     action_activity = response.json['data'][0]['activity']
-                    action_config = response.json['data'][0]['actionConfig']
-                else:
-                    #This also maps to a conflict condition. e.g. software
-                    #FIXME Better understand when this happens
-                    self.fail_json(msg="No data in response.json")
+                    if 'actionConfig' in response.json['data'][0]:
+                        action_config = response.json['data'][0]['actionConfig']
+                    else:
+                        action_config = None
             else:
                 self.fail_json(msg="Unable to get action status: No response")
             time.sleep(10)

@@ -52,3 +52,4 @@
     content: "{{ viptela_api_cookie }}"
     dest: "{{ viptela_api_cookie_file }}"
   delegate_to: localhost
+  when: login_results.set_cookie is defined
