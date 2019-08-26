@@ -13,9 +13,9 @@ except ImportError:
     JSONDecodeError = ValueError
 
 def viptela_argument_spec():
-    return dict(host=dict(type='str', required=True, fallback=(env_fallback, ['viptela_HOST'])),
-            user=dict(type='str', required=True, fallback=(env_fallback, ['viptela_USER'])),
-            password=dict(type='str', required=True, fallback=(env_fallback, ['viptela_PASSWORD'])),
+    return dict(host=dict(type='str', required=True, fallback=(env_fallback, ['VMANAGE_HOST'])),
+            user=dict(type='str', required=True, fallback=(env_fallback, ['VMANAGE_USER'])),
+            password=dict(type='str', required=True, fallback=(env_fallback, ['VMANAGE_PASSWORD'])),
             validate_certs=dict(type='bool', required=False, default=False),
             timeout=dict(type='int', default=30)
     )
@@ -358,6 +358,14 @@ class viptelaModule(object):
         response = self.request('/dataservice/settings/configuration/certificate/enterpriserootca', method='PUT', payload=payload)
         return
 
+    def install_device_cert(self, cert):
+        response = self.request('/dataservice/certificate/install/signedCert', method='POST', data=cert)
+        if response.json and 'id' in response.json:
+            self.waitfor_action_completion(response.json['id'])
+        else:
+            self.fail_json(msg='Did not get action ID after attaching device to template.')
+        return response.json['id']
+
     def get_policy_definition_dict(self, type, key_name='name', remove_key=False):
 
         policy_definition_list = self.get_policy_definition_list(type)
@@ -393,7 +401,57 @@ class viptelaModule(object):
 
         return self.list_to_dict(central_policy_list, key_name, remove_key=remove_key)
 
+    def get_unused_device(self, model):
+        response = self.request('/dataservice/system/device/vedges?model={0}&state=tokengenerated'.format(model))
 
+        if response.json:
+            try:
+                return response.json['data'][0]
+            except:
+                return response.json['data']
+        else:
+            return {}
+
+    def get_device_by_state(self, state, type='vedge'):
+        response = self.request('/dataservice/system/device/{0}?state={1}'.format(type, state))
+
+        if response.json:
+            try:
+                return response.json['data'][0]
+            except:
+                return response.json['data']
+        else:
+            return {}
+
+    def get_device_by_uuid(self, uuid, type='vedge'):
+        response = self.request('/dataservice/system/device/{0}?uuid={1}'.format(type, uuid))
+
+        if response.json:
+            try:
+                return response.json['data'][0]
+            except:
+                return response.json['data']
+        else:
+            return {}
+
+    def get_device_by_device_ip(self, device_ip, type='vedge'):
+        response = self.request('/dataservice/system/device/{0}?deviceIP={1}'.format(type, device_ip))
+
+        if response.json:
+            try:
+                return response.json['data'][0]
+            except:
+                return response.json['data']
+        else:
+            return {}
+
+    def get_device_by_name(self, name, type='vedge'):
+        device_dict = self.get_device_dict(type)
+
+        try:
+            return device_dict[name]
+        except:
+            return {}
 
     def get_device_list(self, type, key_name='host-name', remove_key=True):
         response = self.request('/dataservice/system/device/{0}'.format(type))
@@ -425,6 +483,61 @@ class viptelaModule(object):
             return self.list_to_dict(response.json['data'], key_name=key_name, remove_key=remove_key)
         else:
             return {}
+
+    def create_controller(self, device_ip, personality, username, password):
+        payload = {
+            "deviceIP": device_ip,
+            "username": username,
+            "password": password,
+            "personality": personality,
+            "generateCSR": "false"
+        }
+ 
+        response = self.request('/dataservice/system/device', method='POST', payload=payload)
+
+        if response.json:
+            return response.json
+        else:
+            return None
+
+    def delete_controller(self, uuid):
+        response = self.request('/dataservice/certificate/{0}'.format(uuid), method='DELETE')
+
+        return response
+
+    def generate_csr(self, device_ip):
+        payload = {"deviceIP": device_ip}
+        response = self.request('/dataservice/certificate/generate/csr', method='POST', payload=payload)
+
+        if response.json:
+            try:
+                return response.json['data'][0]['deviceCSR']
+            except:
+                return None
+        else:
+            return None
+
+    def generate_bootstrap(self, uuid):
+        response = self.request('/dataservice/system/device/bootstrap/device/{0}?configtype=cloudinit'.format(uuid))
+
+        try:
+            bootstrap_config = response.json['bootstrapConfig']
+        except:
+            return None
+
+        regex = re.compile(r'otp : (?P<otp>[a-z0-9]+)[^a-z0-9]')
+        match = regex.search(bootstrap_config)
+        if match:
+            otp = match.groups('otp')[0]
+        else:
+            otp = None
+
+        return_dict = {
+            'bootstrapConfig': bootstrap_config,
+            'otp': otp,
+            'uuid': uuid
+        }    
+        return return_dict
 
     def get_template_input(self, template_id):
         payload = {
