@@ -6,7 +6,10 @@
     name: "{{ inventory_hostname }}"
     model: 'vedge-cloud'
   delegate_to: localhost  
-  register: results
+  register: result
+  retries: 10
+  delay: 10
+  until: result is not failed 
 
 - debug:
     var: results
