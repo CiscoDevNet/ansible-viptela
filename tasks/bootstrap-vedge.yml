@@ -30,7 +30,7 @@
   - debug: msg="UUID - {{ result.bootstrap.uuid }}, TOKEN - {{ result.bootstrap.otp }}"
 
   - cli_command:
-      command: "request vedge-cloud activate chassis-number {{ results.bootstrap.uuid }} token {{ results.bootstrap.otp }}"
+      command: "request vedge-cloud activate chassis-number {{ result.bootstrap.uuid }} token {{ result.bootstrap.otp }}"
     connection: network_cli
     register: command_results
 
