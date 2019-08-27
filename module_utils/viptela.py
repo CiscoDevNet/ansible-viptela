@@ -280,7 +280,7 @@ class viptelaModule(object):
         response = self.request('/dataservice/template/policy/list/{0}/{1}'.format(type.lower(), list_id))
         return response.json
 
-    def get_policy_list_list(self, type):
+    def get_policy_list_list(self, type='all'):
         if type == 'all':
             response = self.request('/dataservice/template/policy/list', status_codes=[200, 404])
         else:

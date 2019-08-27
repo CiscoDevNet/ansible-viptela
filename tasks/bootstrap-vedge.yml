@@ -6,10 +6,10 @@
     name: "{{ inventory_hostname }}"
     model: 'vedge-cloud'
   delegate_to: localhost  
-  register: results
-
-- debug:
-    var: results
+  register: result
+  retries: 10
+  delay: 10
+  until: result is not failed 
 
 - block:
   - name: Copy Root CA
@@ -34,4 +34,4 @@
     connection: network_cli
     register: command_results
 
-  when: results.changed
+  when: result.changed
