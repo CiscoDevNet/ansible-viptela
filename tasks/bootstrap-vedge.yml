@@ -11,9 +11,6 @@
   delay: 10
   until: result is not failed 
 
-- debug:
-    var: results
-
 - block:
   - name: Copy Root CA
     copy:
@@ -37,4 +34,4 @@
     connection: network_cli
     register: command_results
 
-  when: results.changed
+  when: result.changed
