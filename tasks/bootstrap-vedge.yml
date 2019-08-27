@@ -27,7 +27,7 @@
     changed_when: true
     when: copy_results.changed
 
-  - debug: msg="UUID - {{ results.bootstrap.uuid }}, TOKEN - {{ results.bootstrap.otp }}"
+  - debug: msg="UUID - {{ result.bootstrap.uuid }}, TOKEN - {{ result.bootstrap.otp }}"
 
   - cli_command:
       command: "request vedge-cloud activate chassis-number {{ results.bootstrap.uuid }} token {{ results.bootstrap.otp }}"
