@@ -1,33 +1,17 @@
-- include_tasks: get-cookie.yml
-  when: viptela_api_cookie is not defined
-
-- name: Get available serial numbers
-  uri:
-    url: "https://{{ vmanage_ip }}/dataservice/system/device/vedges?model=vedge-cloud"
-    method: GET
-    headers:
-      Cookie: "{{ viptela_api_cookie }}"
-    validate_certs: "{{ validate_certs }}"
-    return_content: yes
-  register: uri_results
-  failed_when: false
-  delegate_to: localhost
-  retries: 60
+- name: Get bootstrap info
+  vmanage_device_bootstrap:
+    host: "{{ vmanage_ip }}"
+    user: admin
+    password: admin
+    name: "{{ inventory_hostname }}"
+    model: 'vedge-cloud'
+  delegate_to: localhost  
+  register: result
+  retries: 10
   delay: 10
-  until: uri_results is not failed
-
-- debug: msg="There are no serial numbers available"
-  failed_when: uri_results.json.data[0] is not defined
-  when: uri_results.json.data[0] is not defined
-
-- set_fact:
-    vedge_hostname_list: "{{ uri_results.json.data | map(attribute='host-name') | list }}"
-    vedge_uuid_list: "{{ uri_results.json.data | selectattr('vedgeCertificateState', 'equalto', 'tokengenerated') | map(attribute='chasisNumber') | list }}"
-    # vedge_deviceIP_list: "{{ uri_results.json.data | map(attribute='deviceIP') | list }}"
+  until: result is not failed 
 
 - block:
-#  - debug: var=vedge_uuid_list
-
   - name: Copy Root CA
     copy:
       src: "{{ root_ca_file }}"
@@ -43,29 +27,11 @@
     changed_when: true
     when: copy_results.changed
 
-  - name: Get bootstrap information
-    uri:
-      url: "https://{{ vmanage_ip }}/dataservice/system/device/bootstrap/device/{{ vedge_uuid_list[0] }}?configtype=cloudinit"
-      method: GET
-      headers:
-        Cookie: "{{ viptela_api_cookie }}"
-      validate_certs: "{{ validate_certs }}"
-      return_content: yes
-    register: uri_results
-    delegate_to: localhost
-    retries: 60
-    delay: 10
-    until: uri_results is not failed
-
-  - set_fact:
-      device_otp: "{{ (uri_results.json.bootstrapConfig | regex_search('otp : ([a-z0-9]+)[^a-z0-9]', '\\1'))[0] }}"
-      device_uuid: "{{ vedge_uuid_list[0] }}"
-
-  - debug: msg="UUID - {{ device_uuid }}, TOKEN - {{ device_otp }}"
+  - debug: msg="UUID - {{ result.bootstrap.uuid }}, TOKEN - {{ result.bootstrap.otp }}"
 
   - cli_command:
-      command: "request vedge-cloud activate chassis-number {{ device_uuid }} token {{ device_otp }}"
+      command: "request vedge-cloud activate chassis-number {{ result.bootstrap.uuid }} token {{ result.bootstrap.otp }}"
     connection: network_cli
     register: command_results
 
-  when: inventory_hostname not in vedge_hostname_list
+  when: result.changed

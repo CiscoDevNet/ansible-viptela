@@ -38,9 +38,11 @@ def run_module():
     # response_json = response.json()
     # vsmart_policies = response_json['data']
     policy_lists = {}
-    for list_type in viptela.POLICY_LIST_TYPES:
-        list = viptela.get_policy_list_list(list_type)
-        policy_lists[list_type] = list
+    # for list_type in viptela.POLICY_LIST_TYPES:
+    #     list = viptela.get_policy_list_list(list_type)
+    #     policy_lists[list_type] = list
+    policy_lists = viptela.get_policy_list_list('all')
+
 
     # # Prefix lists
     # prefix_lists = viptela.get_policy_list_list('prefix')
