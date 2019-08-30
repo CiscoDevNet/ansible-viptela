@@ -79,18 +79,18 @@
 
 - name: Interact with the vManage to create templates
   vmanage_feature_template:
-    user: "{{ansible_user}}"
-    host: "{{ansible_host}}:{{ansible_port}}"
-    password: "{{ansible_password}}"
+    user: "{{vmanage_user}}"
+    host: "{{vmanage_host}}"
+    password: "{{vmanage_password}}"
     state: present
     aggregate: "{{present_feature_list}}"
   when: present_feature_list
 
 - name: Interact with the vManage to delete templates
   vmanage_feature_template:
-    user: "{{ansible_user}}"
-    host: "{{ansible_host}}:{{ansible_port}}"
-    password: "{{ansible_password}}"
+    user: "{{vmanage_user}}"
+    host: "{{vmanage_host}}"
+    password: "{{vmanage_password}}"
     state: absent
     aggregate: "{{absent_template_list}}"
   when: absent_template_list
