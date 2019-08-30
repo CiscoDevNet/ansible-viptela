@@ -328,6 +328,58 @@ Retrieve device facts
 * `count`: The number of packets to send
 * `rapid`: Whether to do a rapid ping
 
+## Software Tasks
+
+### Software facts
+
+```yaml
+- vmanage_software_facts:
+    host: "{{ vmanage_host }}"
+    user: "{{ vmanage_user }}"
+    password: "{{ vmanage_password }}"
+```
+Retrieve software facts
+
+### Upload software image
+
+```yaml
+- vmanage_software_upload:
+    host: "{{ vmanage_host }}"
+    user: "{{ vmanage_user }}"
+    password: "{{ vmanage_password }}"
+    state: present
+    file: filename
+```
+
+#### Arguments:
+* `state`: absent/present
+* `file`: filename of a valid SD-WAN software file
+
+Upload software files to vManage
+
+### Upgrade software on device
+
+```yaml
+- vmanage_software_upgrade:
+    user: "{{vmanage_user}}"
+    host: "{{vmanage_host}}"
+    password: "{{vmanage_password}}"
+    devices:
+      - deviceIP: systemIp
+        deviceId: deviceId
+    deviceType: deviceType
+    activate: true/false
+    set_default: true/false
+    version: softwareVersion
+```
+Install and activate software on target devices
+
+#### Arguments:
+* `devices`: list devices to upgrade
+* `deviceType`: controller/vedge
+* `activate`: true/false
+* `set_default`: true/false
+* `version`: software repository
 
 ## Role Tasks
 
