@@ -38,7 +38,7 @@ def run_module():
     viptela = viptelaModule(module)
 
     viptela.result['software_images'] = viptela.get_software_images_list()
-    viptela.result['vedges'] = viptela.get_installed_software(type='vedges')
+    viptela.result['vedges'] = viptela.get_installed_software(type='vedge')
     viptela.result['controller'] = viptela.get_installed_software(type='controller')
     viptela.result['vmanage'] = viptela.get_installed_software(type='vmanage')
 
