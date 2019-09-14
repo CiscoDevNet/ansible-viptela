@@ -14,9 +14,10 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
-                         name=dict(type='str', required=True),
+                         name=dict(type='str'),
                          device_ip=dict(type='str', alias='deviceIP'),
-                         personality=dict(type='str', choices=['vmanage', 'vsmart', 'vbond', 'vedge'], required=True),
+                         uuid=dict(type='str', alias='deviceIP'),
+                         personality=dict(type='str', choices=['vmanage', 'vsmart', 'vbond', 'vedge'], default='vedge'),
                          device_username=dict(type='str', alias='device_user'),
                          device_password=dict(type='str')
                          )
@@ -46,8 +47,10 @@ def run_module():
         device_type = 'controllers'
 
     device = {}
+    if viptela.params['uuid']:
+        device = viptela.get_device_by_uuid(viptela.params['uuid'], type=device_type)
     # See if we can find the device by deviceIP
-    if viptela.params['device_ip']:
+    if not device and viptela.params['device_ip']:
         device = viptela.get_device_by_device_ip(viptela.params['device_ip'], type=device_type)
     # If we could not find the device by deviceIP, see if we can find it be (host)name
     if not device:
@@ -66,10 +69,14 @@ def run_module():
                     viptela.params['device_username'], viptela.params['device_password'])
                 viptela.result['response'] = response
     else:
-        if device:
+        if device and device['vedgeCertificateState'] != 'tokengenerated':
             viptela.result['what_changed'].append('delete')
-            if not module.check_mode:
-                viptela.delete_controller(device['uuid'])
+            if device_type == 'controllers':
+                if not module.check_mode:
+                    viptela.delete_controller(device['uuid'])
+            else:
+                if not module.check_mode:
+                    viptela.decommision_device(device['uuid'])
 
     if viptela.result['what_changed']:
         viptela.result['changed'] = True        
