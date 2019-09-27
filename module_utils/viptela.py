@@ -158,7 +158,7 @@ class viptelaModule(object):
         decoded_response = {}
         if self.status_code not in status_codes:
             try:
-                decoded_response = response.json()                
+                decoded_response = response.json()
             except JSONDecodeError:
                 pass
 
@@ -338,7 +338,7 @@ class viptelaModule(object):
         response = self.request('/dataservice/settings/configuration/organization',method='POST', payload=payload)
 
         return response.json['data']
-         
+
     def get_vmanage_vbond(self):
         response = self.request('/dataservice/settings/configuration/device')
         vbond = None
@@ -352,7 +352,7 @@ class viptelaModule(object):
         payload = {'domainIp': vbond, 'port': vbond_port}
         response = self.request('/dataservice/settings/configuration/device', method='POST', payload=payload)
 
-        return    
+        return
 
     def get_vmanage_ca_type(self):
         response = self.request('/dataservice/settings/configuration/certificate')
@@ -644,6 +644,67 @@ class viptelaModule(object):
                             return_dict[variable] = column['property']
 
         return return_dict
+
+    def get_software_images_list(self):
+        #TODO undertand the difference with the URL: /dataservice/device/action/software/images used in devnetsandbox
+        response = self.request('/dataservice/device/action/software', method='GET')
+
+        if response.json:
+            return response.json['data']
+        else:
+            return []
+
+    def get_installed_software(self,type):
+        response = self.request('/dataservice/device/action/install/devices/{0}?groupId=all'.format(type), method='GET')
+
+        if response.json:
+            return response.json['data']
+        else:
+            return []
+
+    def software_install(self,devices,deviceType,data,reboot):
+
+        payload= {
+            "action":"install",
+            "input":{
+                "vEdgeVPN":0,
+                "vSmartVPN":0,
+                "data": data,
+                "versionType":"vmanage",
+                "reboot":reboot,
+                "sync": True
+            },
+            "devices": devices,
+            "deviceType": deviceType
+        }
+
+        response = self.request('/dataservice/device/action/install', method='POST', payload=payload)
+
+        if response.json and 'id' in response.json:
+            self.waitfor_action_completion(response.json['id'])
+        else:
+            self.fail_json(
+                msg='Did not get action ID after installing software.')
+
+        return response.json['id']
+
+    def set_default_partition(self,devices,deviceType):
+
+        payload= {
+            "action":"defaultpartition",
+            "devices": devices,
+            "deviceType": deviceType
+        }
+
+        response = self.request('/dataservice/device/action/defaultpartition', method='POST', payload=payload)
+
+        if response.json and 'id' in response.json:
+            self.waitfor_action_completion(response.json['id'])
+        else:
+            self.fail_json(
+                msg='Did not get action ID after setting default image.')
+
+        return response.json['id']
 
     def push_certificates(self):
         response = self.request('/dataservice/certificate/vedge/list?action=push', method='POST')

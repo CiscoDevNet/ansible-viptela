@@ -389,7 +389,6 @@ Retrieve device facts
 * `count`: The number of packets to send
 * `rapid`: Whether to do a rapid ping
 
-License
--------
+## License
 
 CISCO SAMPLE CODE LICENSE
