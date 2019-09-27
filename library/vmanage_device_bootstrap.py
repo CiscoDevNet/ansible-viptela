@@ -13,7 +13,7 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
     argument_spec.update(name=dict(type='str'),
-                         device_ip=dict(type='str', alias='deviceIP'),
+                         system_ip=dict(type='str', aliases=['device_ip']),
                          uuid=dict(type='str'),
                          model=dict(type='str'),
                          )
@@ -42,9 +42,9 @@ def run_module():
     if viptela.params['uuid']:
         uuid = viptela.params['uuid']
         device = viptela.get_device_by_uuid(viptela.params['uuid'])
-    elif viptela.params['device_ip']:
+    elif viptela.params['system_ip']:
         # See if we can find the device by deviceIP
-        device = viptela.get_device_by_device_ip(viptela.params['device_ip'])
+        device = viptela.get_device_by_device_ip(viptela.params['system_ip'])
         if 'uuid' in device:
             uuid = device['uuid']
     elif viptela.params['name']:
