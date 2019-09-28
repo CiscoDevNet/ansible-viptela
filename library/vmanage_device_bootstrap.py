@@ -53,17 +53,6 @@ def run_module():
             uuid = device['uuid']
 
     if uuid:
-        # if device['manageConnectionState'] != 'connected'
-        # if UUID is specified, try to get by uuid
-        # if viptela.params['uuid']:
-            
-        #     if not device:
-                
-        # elif viptela.params['model']:
-        #     # if no uuid was specified, just grab the first free device
-        #     device = viptela.get_unused_device(viptela.params['model'])
-        #     if not device:
-        #         viptela.fail_json(msg="Could not find available device")
         if device['vedgeCertificateState'] in ['tokengenerated', 'bootstrapconfiggenerated']:
             # We can only generate bootstrap in these two states.  Otherwise, the
             # device is in-use and cannot be bootstrapped.
@@ -74,6 +63,15 @@ def run_module():
                 viptela.result['bootstrap'] = bootstrap
         # else:
         #     viptela.fail_json(msg="Could not generate bootstrap for UUID: {0}. 'vedgeCertificateState' not 'tokengenerated' or 'bootstrapconfiggenerated'".format(uuid))
+    elif viptela.params['model']:
+        # if no uuid was specified, just grab the first free device
+        device = viptela.get_unused_device(viptela.params['model'])
+        if not device:
+            viptela.fail_json(msg="Could not find available device")
+        viptela.result['what_changed'].append('bootstrap')
+        if not module.check_mode:
+            bootstrap = viptela.generate_bootstrap(device['uuid'])
+            viptela.result['bootstrap'] = bootstrap
     else:
         viptela.fail_json(msg="Could not find UUID with supplied arguments")
 
