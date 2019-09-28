@@ -49,6 +49,67 @@ This role can perform the following functions:
 * `ca_type`: CA type
 * `root_cert`: CA root certificate
 
+### Add device
+
+```yaml
+- vmanage_device:
+    host: "{{ vmanage_ip }}"
+    user: "{{ vmanage_user }}"
+    password: "{{ vmanage_pass }}"
+    device_username: admin
+    device_password: admin
+    name: "{{ item }}"
+    personality: "{{ hostvars[item].viptela.personality }}"
+    system_ip: "{{ hostvars[item].viptela.transport_ip }}"
+```
+
+#### Arguments:
+* `device_username`: Username of the device being added
+* `device_password`: Password of the user specified
+* `name`: Name of the device being added
+* `system_ip`: The System IP of the device
+* `personality`: Personality of the device
+* `state`: `present` or `absent` (default: `present`)
+
+### Generate device CSR
+
+```yaml
+- name: vmanage_device_certificate:
+    host: "{{ vmanage_ip }}"
+    user: "{{ vmanage_user }}"
+    password: "{{ vmanage_pass }}"
+    name: "{{ item }}"
+    system_ip: "{{ hostvars[item].viptela.transport_ip }}"
+    state: csr
+  register: control_devices
+```
+
+#### Arguments:
+
+* `name`: Name of the device being added (required for `present` and `csr`)
+* `system_ip`: The System IP of the device
+* `cert`: The certificate to install when state is `present`
+* `state`:
+  * `present`: Add certificate vmanage
+  * `csr`: Generate CSR (CSR passed in results)
+  * `push`: Push certificates to controllers
+
+### Get device bootstrap information
+
+```yaml
+- vmanage_device_bootstrap:
+    host: "{{ vmanage_ip }}"
+    user: "{{ vmanage_user }}"
+    password: "{{ vmanage_pass }}"
+    uuid: "{{ viptela.uuid }}"
+  register: result
+```
+
+#### Arguments:
+
+* `uuid`: UUID of the device 
+
+
 ### Get Device Template Facts
 ```yaml
 - vmanage_device_template_facts:
@@ -328,101 +389,6 @@ Retrieve device facts
 * `count`: The number of packets to send
 * `rapid`: Whether to do a rapid ping
 
-
-## Role Tasks
-
-
-### Add vBond Host:
-```yaml
-- name: Add vBond Hosts
-  include_role:
-    name: ansible-viptela
-    tasks_from: add-controller
-  vars:
-    device_hostname: "{{ item }}"
-    device_ip: "{{ hostvars[item].transport_ip }}"
-    device_personality: vbond
-  loop: "{{ groups.vbond_hosts }}"
-```
-
-### Add vSmart Host:
-```yaml
-- name: Add vSmart Hosts
-  include_role:
-    name: ansible-viptela
-    tasks_from: add-controller
-  vars:
-    device_hostname: "{{ item }}"
-    device_ip: "{{ hostvars[item].transport_ip }}"
-    device_personality: vsmart
-  loop: "{{ groups.vsmart_hosts }}"
-```
-
-### Set Organization:
-```yaml
-- name: Set organization
-  include_role:
-    name: ansible-viptela
-    tasks_from: set-org
-  vars:
-    org_name: "{{ organization_name }}"
-```
-
-### Set vBond:
-```yaml
-- name: Set vBond
-  include_role:
-    name: ansible-viptela
-    tasks_from: set-vbond
-  vars:
-    vbond_ip: "{{ hostvars[vbond_controller].transport_ip }}"
-```
-
-### Set Enterprise Root CA:
-```yaml
-- name: Set Enterprise Root CA
-  include_role:
-    name: ansible-viptela
-    tasks_from: set-rootca
-  vars:
-    root_cert: "{{lookup('file', '{{ viptela_cert_dir }}/myCA.pem')}}"
-```
-
-### Get Controller CSR:
-```yaml
-- name: Get Controler CSR
-  include_role:
-    name: ansible-viptela
-    tasks_from: get-csr
-  vars:
-    device_ip: "{{ hostvars[item].transport_ip }}"
-    device_hostname: "{{ item }}"
-    csr_filename: "{{ viptela_cert_dir }}/{{ item }}.{{ env }}.csr"
-  loop: "{{ groups.viptela_control }}"
-```
-
-### Installing Controller Certificates:
-```yaml
-- name: Install Controller Certificate
-  include_role:
-    name: ansible-viptela
-    tasks_from: install-cert
-  vars:
-    device_cert: "{{lookup('file', '{{ viptela_cert_dir }}/{{ item }}.{{ env }}.crt')}}"
-  loop: "{{ groups.viptela_control }}"
-```
-
-### Installing Serial File:
-```yaml
-- name: Install Serial File
-  include_role:
-   name: ansible-viptela
-   tasks_from: install-serials
-  vars:
-   viptela_serial_file: 'licenses/viptela_serial_file.viptela'
-```
-
-License
--------
+## License
 
 CISCO SAMPLE CODE LICENSE
