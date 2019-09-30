@@ -1,5 +1,6 @@
 - import_tasks: generic-feature-template.yml
   run_once: True
+  tags: archive
   vars:
     template_list: "{{ Feature_Templates['Archive_Templates'] }}"
     template: sdwan-templates/feature-archive.j2
