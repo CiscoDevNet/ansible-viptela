@@ -1,0 +1,7 @@
+- import_tasks: generic-feature-template.yml
+  run_once: True
+  vars:
+    template_list: "{{ Feature_Templates['System_Templates'] }}"
+    template: feature-system.j2
+    folder: feature-system
+  when: Feature_Templates['System_Templates'] is defined

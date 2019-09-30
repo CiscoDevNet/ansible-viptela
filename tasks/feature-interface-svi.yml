@@ -1,0 +1,7 @@
+- import_tasks: generic-feature-template.yml
+  run_once: True
+  vars:
+    template_list: "{{ Feature_Templates['Interface_SVI_Templates'] }}"
+    template: feature-interface-svi.j2
+    folder: feature-interface-svi
+  when: Feature_Templates['Interface_SVI_Templates'] is defined

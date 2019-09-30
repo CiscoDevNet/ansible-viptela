@@ -1,0 +1,7 @@
+- import_tasks: generic-feature-template.yml
+  run_once: True
+  vars:
+    template_list: "{{ Feature_Templates['Archive_Templates'] }}"
+    template: feature-archive.j2
+    folder: feature-archive
+  when: Feature_Templates['Archive_Templates'] is defined

@@ -1,0 +1,7 @@
+- import_tasks: generic-feature-template.yml
+  run_once: True
+  vars:
+    template_list: "{{ Feature_Templates['Security_Templates'] }}"
+    template: feature-security.j2
+    folder: feature-security
+  when: Feature_Templates['Security_Templates'] is defined

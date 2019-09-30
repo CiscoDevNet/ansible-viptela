@@ -1,0 +1,7 @@
+- import_tasks: generic-feature-template.yml
+  run_once: True
+  vars:
+    template_list: "{{ Feature_Templates['BFD_Templates'] }}"
+    template: feature-bfd.j2
+    folder: feature-bfd
+  when: Feature_Templates['BFD_Templates'] is defined

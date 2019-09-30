@@ -1,0 +1,7 @@
+- import_tasks: generic-feature-template.yml
+  run_once: True
+  vars:
+    template_list: "{{ Feature_Templates['IGMP_Templates'] }}"
+    template: feature-igmp.j2
+    folder: feature-igmp
+  when: Feature_Templates['IGMP_Templates'] is defined

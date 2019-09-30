@@ -1,0 +1,7 @@
+- import_tasks: generic-feature-template.yml
+  run_once: True
+  vars:
+    template_list: "{{ Feature_Templates['OSPF_Templates'] }}"
+    template: feature-ospf.j2
+    folder: feature-ospf
+  when: Feature_Templates['OSPF_Templates'] is defined

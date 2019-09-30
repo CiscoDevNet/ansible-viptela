@@ -1,0 +1,7 @@
+- import_tasks: generic-feature-template.yml
+  run_once: True
+  vars:
+    template_list: "{{ Feature_Templates['OMP_Templates'] }}"
+    template: feature-omp.j2
+    folder: feature-omp
+  when: Feature_Templates['OMP_Templates'] is defined
