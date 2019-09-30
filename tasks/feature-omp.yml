@@ -1,5 +1,6 @@
 - import_tasks: generic-feature-template.yml
   run_once: True
+  tags: omp
   vars:
     template_list: "{{ Feature_Templates['OMP_Templates'] }}"
     template: sdwan-templates/feature-omp.j2

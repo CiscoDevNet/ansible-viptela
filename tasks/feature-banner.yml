@@ -1,5 +1,6 @@
 - import_tasks: generic-feature-template.yml
   run_once: True
+  tags: banner
   vars:
     template_list: "{{ Feature_Templates['Banner_Templates'] }}"
     template: sdwan-templates/feature-banner.j2

@@ -1,5 +1,6 @@
 - import_tasks: generic-feature-template.yml
   run_once: True
+  tags: system
   vars:
     template_list: "{{ Feature_Templates['System_Templates'] }}"
     template: sdwan-templates/feature-system.j2

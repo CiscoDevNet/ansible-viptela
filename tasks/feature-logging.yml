@@ -1,5 +1,6 @@
 - import_tasks: generic-feature-template.yml
   run_once: True
+  tags: logging
   vars:
     template_list: "{{ Feature_Templates['Logging_Templates'] }}"
     template: sdwan-templates/feature-logging.j2

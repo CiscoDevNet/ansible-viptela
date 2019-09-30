@@ -1,5 +1,6 @@
 - import_tasks: generic-feature-template.yml
   run_once: True
+  tags: dhcp
   vars:
     template_list: "{{ Feature_Templates['DHCP_Templates'] }}"
     template: sdwan-templates/feature-dhcp.j2

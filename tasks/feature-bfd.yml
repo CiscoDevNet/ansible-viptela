@@ -1,5 +1,6 @@
 - import_tasks: generic-feature-template.yml
   run_once: True
+  tags: bfd
   vars:
     template_list: "{{ Feature_Templates['BFD_Templates'] }}"
     template: sdwan-templates/feature-bfd.j2

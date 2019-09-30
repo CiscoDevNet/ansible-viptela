@@ -1,5 +1,6 @@
 - import_tasks: generic-feature-template.yml
   run_once: True
+  tags: security
   vars:
     template_list: "{{ Feature_Templates['Security_Templates'] }}"
     template: sdwan-templates/feature-security.j2
