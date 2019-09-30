@@ -2,6 +2,6 @@
   run_once: True
   vars:
     template_list: "{{ Feature_Templates['DHCP_Templates'] }}"
-    template: feature-dhcp.j2
+    template: sdwan-templates/feature-dhcp.j2
     folder: feature-dhcp
   when: Feature_Templates['DHCP_Templates'] is defined

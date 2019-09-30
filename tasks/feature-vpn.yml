@@ -2,6 +2,6 @@
   run_once: True
   vars:
     template_list: "{{ Feature_Templates['VPN_Templates'] }}"
-    template: feature-vpn.j2
+    template: sdwan-templates/feature-vpn.j2
     folder: feature-vpn
   when: Feature_Templates['VPN_Templates'] is defined
