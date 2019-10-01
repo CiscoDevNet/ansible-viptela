@@ -79,9 +79,12 @@ def run_module():
                 device_data['host-name'] = viptela.params['device_name']
             else:
                 viptela.fail_json(msg='device_name is needed when pre-attaching templates')                       
-    elif viptela.params['device']:
-        device_data = viptela.get_device_by_name(viptela.params['device'], type=device_type)
-        if 'uuid' not in device_data:
+    elif viptela.params['device_name']:
+        device_status = viptela.get_device_status(viptela.params['device_name'], key='host-name')
+        if 'uuid' in device_status:
+            device_type = 'controllers' if device_status['personality'] in ['vmanage', 'vbond', 'vsmart'] else 'vedges'
+            device_data = viptela.get_device_by_uuid(device_status['uuid'], type=device_type) 
+        else:
             viptela.fail_json(msg='Cannot find device with name: {0}.'.format(viptela.params['device']))
 
     if viptela.params['state'] == 'present':

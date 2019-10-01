@@ -232,6 +232,14 @@ class viptelaModule(object):
                     self.fail_json(msg="Could not find list {0} of type {1}".format(entry['listName'], entry['listType']))
         return sequence_list
 
+    def get_device_status(self, value, key='system-ip'):
+        result = self.request('/dataservice/device?{0}={1}'.format(key, value))
+
+        try:
+            return response.json['data'][0]
+        except:
+            return {}
+
     def get_device_template_list(self, factory_default=False):
         response = self.request('/dataservice/template/device')
 
