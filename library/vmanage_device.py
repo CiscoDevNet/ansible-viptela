@@ -14,9 +14,10 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
-                         name=dict(type='str', required=True),
-                         device_ip=dict(type='str', alias='deviceIP'),
-                         personality=dict(type='str', choices=['vmanage', 'vsmart', 'vbond', 'vedge'], required=True),
+                         name=dict(type='str'),
+                         system_ip=dict(type='str', aliases=['device_ip']),
+                         uuid=dict(type='str', alias='deviceIP'),
+                         personality=dict(type='str', choices=['vmanage', 'vsmart', 'vbond', 'vedge'], default='vedge'),
                          device_username=dict(type='str', alias='device_user'),
                          device_password=dict(type='str')
                          )
@@ -46,13 +47,16 @@ def run_module():
         device_type = 'controllers'
 
     device = {}
+    if viptela.params['uuid']:
+        device = viptela.get_device_status(viptela.params['uuid'], key='uuid')
     # See if we can find the device by deviceIP
-    if viptela.params['device_ip']:
-        device = viptela.get_device_by_device_ip(viptela.params['device_ip'], type=device_type)
+    if not device and viptela.params['system_ip']:
+        device = viptela.get_device_status(viptela.params['system_ip'])
     # If we could not find the device by deviceIP, see if we can find it be (host)name
-    if not device:
-        device = viptela.get_device_by_name(viptela.params['name'], type=device_type)
+    if not device and viptela.params['name']:
+        device = viptela.get_device_status(viptela.params['name'], key='host-name')
 
+    viptela.result['device'] = device
     if viptela.params['state'] == 'present':
         if device:
             # Can't really change anything
@@ -62,14 +66,19 @@ def run_module():
             if not viptela.params['device_username'] or not viptela.params['device_password']:
                 viptela.fail_json(msg="device_username and device_password must be specified when add a new device")
             if not module.check_mode:
-                response = viptela.create_controller(viptela.params['device_ip'], viptela.params['personality'],
+                response = viptela.create_controller(viptela.params['system_ip'], viptela.params['personality'],
                     viptela.params['device_username'], viptela.params['device_password'])
                 viptela.result['response'] = response
     else:
-        if device:
-            viptela.result['what_changed'].append('delete')
+        if device and device_type == 'controllers':
             if not module.check_mode:
                 viptela.delete_controller(device['uuid'])
+        elif device and device_type == 'vedges':
+            device_config = viptela.get_device_by_uuid(device['uuid'], type=device_type)
+            if 'vedgeCertificateState' in device_config and device_config['vedgeCertificateState'] != 'tokengenerated':
+                viptela.result['what_changed'].append('delete')
+                if not module.check_mode:
+                    viptela.decommision_device(device['uuid'])
 
     if viptela.result['what_changed']:
         viptela.result['changed'] = True        

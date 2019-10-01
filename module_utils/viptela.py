@@ -1,5 +1,5 @@
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+# from __future__ import absolute_import, division, generate_function
+# __metaclass__ = type
 import json
 import requests
 import re
@@ -100,6 +100,8 @@ class viptelaModule(object):
 
 
     def login(self):
+        # self.session.headers.update({'Connection': 'keep-alive', 'Content-Type': 'application/json'})
+
         try:
             response = self.session.post(
                 url='https://{0}/j_security_check'.format(self.host),
@@ -112,26 +114,44 @@ class viptelaModule(object):
 
         if response.text.startswith('<html>'):
             self.fail_json(msg='Could not login to device, check user credentials.', **self.result)
+
+        response = self.session.get(
+            url='https://{0}/dataservice/client/token'.format(self.host),
+            timeout=self.timeout
+        )
+        if response.status_code == 200:
+            self.session.headers['X-XSRF-TOKEN'] = response.content
+        elif response.status_code == 404:
+            # Assume this is pre-19.2
+            pass
         else:
-            return response
+            self.fail_json(msg='Failed getting X-XSRF-TOKEN: {0}'.format(response.status_code))
+        
+        return response
 
     def logout(self):
         self.request('/dataservice/settings/clientSessionTimeout')
         self.request('/logout')
 
-    def request(self, url_path, method='GET', headers=STANDARD_JSON_HEADER, data=None, files=None, payload=None, status_codes=VALID_STATUS_CODES):
+    def request(self, url_path, method='GET', data=None, files=None, headers=None, payload=None, status_codes=VALID_STATUS_CODES):
         """Generic HTTP method for viptela requests."""
 
         self.method = method
-        self.headers = headers
         self.url = 'https://{0}{1}'.format(self.host, url_path)
+        self.result['url'] = self.url
+        self.result['headers'] = self.session.headers.__dict__
+        if files == None:
+            self.session.headers['Content-Type'] = 'application/json'
+
+        # {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
+        # self.session.headers.update(headers)
 
         if payload:
             self.result['payload'] = payload
             data = json.dumps(payload)
             self.result['data'] = data
 
-        response = self.session.request(method, self.url, headers=headers, files=files, data=data)
+        response = self.session.request(method, self.url, files=files, data=data)
 
         self.status_code = response.status_code
         self.status = requests.status_codes._codes[response.status_code][0]
@@ -211,6 +231,14 @@ class viptelaModule(object):
                 else:
                     self.fail_json(msg="Could not find list {0} of type {1}".format(entry['listName'], entry['listType']))
         return sequence_list
+
+    def get_device_status(self, value, key='system-ip'):
+        result = self.request('/dataservice/device?{0}={1}'.format(key, value))
+
+        try:
+            return response.json['data'][0]
+        except:
+            return {}
 
     def get_device_template_list(self, factory_default=False):
         response = self.request('/dataservice/template/device')
@@ -343,7 +371,7 @@ class viptelaModule(object):
 
     def set_vmanage_ca_type(self, type):
         payload = {'certificateSigning': type, 'challengeAvailable': 'false'}
-        response = self.request('/dataservice/settings/configuration/certificate',method='POST', payload=payload)
+        response = self.request('/dataservice/settings/configuration/certificate', method='POST', payload=payload)
         return
 
     def get_vmanage_root_cert(self):
@@ -412,7 +440,7 @@ class viptelaModule(object):
         else:
             return {}
 
-    def get_device_by_state(self, state, type='vedge'):
+    def get_device_by_state(self, state, type='vedges'):
         response = self.request('/dataservice/system/device/{0}?state={1}'.format(type, state))
 
         if response.json:
@@ -423,7 +451,7 @@ class viptelaModule(object):
         else:
             return {}
 
-    def get_device_by_uuid(self, uuid, type='vedge'):
+    def get_device_by_uuid(self, uuid, type='vedges'):
         response = self.request('/dataservice/system/device/{0}?uuid={1}'.format(type, uuid))
 
         if response.json:
@@ -434,7 +462,7 @@ class viptelaModule(object):
         else:
             return {}
 
-    def get_device_by_device_ip(self, device_ip, type='vedge'):
+    def get_device_by_device_ip(self, device_ip, type='vedges'):
         response = self.request('/dataservice/system/device/{0}?deviceIP={1}'.format(type, device_ip))
 
         if response.json:
@@ -445,7 +473,7 @@ class viptelaModule(object):
         else:
             return {}
 
-    def get_device_by_name(self, name, type='vedge'):
+    def get_device_by_name(self, name, type='vedges'):
         device_dict = self.get_device_dict(type)
 
         try:
@@ -466,6 +494,29 @@ class viptelaModule(object):
         device_list = self.get_device_list(type)
 
         return self.list_to_dict(device_list, key_name=key_name, remove_key=remove_key)
+
+    def get_device_status_list(self):
+        response = self.request('/dataservice/device')
+
+        if response.json:
+            return response.json['data']
+        else:
+            return []
+
+    def get_device_status_dict(self, key_name='host-name', remove_key=False):
+
+        device_list = self.get_device_list()
+
+        return self.list_to_dict(device_list, key_name=key_name, remove_key=remove_key)
+
+    def get_device_status(self, value, key='system-ip'):
+        response = self.request('/dataservice/device?{0}={1}'.format(key, value))
+
+        try:
+            return response.json['data'][0]
+        except:
+            return {}
+
 
     def get_device_vedges(self, key_name='host-name', remove_key=True):
         response = self.request('/dataservice/system/device/vedges')
@@ -502,6 +553,11 @@ class viptelaModule(object):
 
     def delete_controller(self, uuid):
         response = self.request('/dataservice/certificate/{0}'.format(uuid), method='DELETE')
+
+        return response
+
+    def decommision_device(self, uuid):
+        response = self.request('/dataservice/system/device/decommission/{0}'.format(uuid), method='PUT')
 
         return response
 
@@ -663,7 +719,7 @@ class viptelaModule(object):
         if response.json and 'id' in response.json:
             self.waitfor_action_completion(response.json['id'])
         else:
-            self.fail_json(msg='Did not get action ID after attaching device to template.')
+            self.fail_json(msg='Did not get action ID after pushing certificates.')
         return response.json['id']
 
     def reattach_device_template(self, template_id):
@@ -729,10 +785,6 @@ class viptelaModule(object):
     def exit_json(self, **kwargs):
         # self.logout()
         """Custom written method to exit from module."""
-        self.result['status'] = self.status
-        self.result['status_code'] = self.status_code
-        self.result['url'] = self.url
-        self.result['method'] = self.method
 
         self.result.update(**kwargs)
         self.module.exit_json(**self.result)
@@ -740,10 +792,6 @@ class viptelaModule(object):
     def fail_json(self, msg, **kwargs):
         # self.logout()
         """Custom written method to return info on failure."""
-        self.result['status'] = self.status
-        self.result['status_code'] = self.status_code
-        self.result['url'] = self.url
-        self.result['method'] = self.method
 
         self.result.update(**kwargs)
         self.module.fail_json(msg=msg, **self.result)
