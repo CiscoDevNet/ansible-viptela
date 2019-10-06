@@ -4,5 +4,5 @@
     host: "{{vmanage_host}}"
     password: "{{vmanage_password}}"
     state: present
-    aggregate: "{{present_feature_list}}"
-  when: present_feature_list
+    aggregate: "{{present_template_list}}"
+  when: present_template_list

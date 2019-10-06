@@ -7,7 +7,7 @@
 
 - name: Creating a list of templates
   set_fact:
-    present_feature_list: "{{ generic_template_registered_list.results | map(attribute = 'ansible_facts.generic_template') | list }}"
+    present_template_list: "{{ generic_template_registered_list.results | map(attribute = 'ansible_facts.generic_template') | list }}"
 
 - name: Creating an empty list of templates to be removed
   set_fact:

@@ -10,4 +10,4 @@
     device_type: "{{ item.deviceType }}"
     template_min_version:  "{{ item.templateMinVersion }}"
     factory_default: "{{ item.factoryDefault }}"
-  loop: "{{present_feature_list}}"
+  loop: "{{present_template_list}}"
