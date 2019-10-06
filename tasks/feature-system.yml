@@ -3,7 +3,7 @@
   tags: feature-system,feature-system:render,render
   vars:
     template_list: "{{ FeatureTemplates['feature-system'] }}"
-    template: sdwan-templates/feature-system.j2
+    template: sdwan-templates/feature-system-vedge.j2
     folder: feature-system
   when: FeatureTemplates['feature-system'] is defined
 
@@ -12,7 +12,7 @@
   tags: feature-system,feature-system:create,feature-system:delete,feature-system:debug
   vars:
     template_list: "{{ FeatureTemplates['feature-system'] }}"
-    template: sdwan-templates/feature-system.j2
+    template: sdwan-templates/feature-system-vedge.j2
     folder: feature-system
   when: FeatureTemplates['feature-system'] is defined
 
