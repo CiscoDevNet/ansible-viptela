@@ -1,8 +1,0 @@
-- import_tasks: generic-feature-template.yml
-  run_once: True
-  tags: ntp
-  vars:
-    template_list: "{{ Feature_Templates['NTP_Templates'] }}"
-    template: sdwan-templates/feature-ntp.j2
-    folder: feature-ntp
-  when: Feature_Templates['NTP_Templates'] is defined

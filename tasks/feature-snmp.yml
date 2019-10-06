@@ -1,8 +1,0 @@
-- import_tasks: generic-feature-template.yml
-  run_once: True
-  tags: snmp
-  vars:
-    template_list: "{{ Feature_Templates['SNMP_Templates'] }}"
-    template: sdwan-templates/feature-snmp.j2
-    folder: feature-snmp
-  when: Feature_Templates['SNMP_Templates'] is defined

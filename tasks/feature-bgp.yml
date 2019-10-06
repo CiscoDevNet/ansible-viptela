@@ -1,8 +1,0 @@
-- import_tasks: generic-feature-template.yml
-  run_once: True
-  tags: bgp
-  vars:
-    template_list: "{{ Feature_Templates['BGP_Templates'] }}"
-    template: sdwan-templates/feature-bgp.j2
-    folder: feature-bgp
-  when: Feature_Templates['BGP_Templates'] is defined

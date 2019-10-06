@@ -1,8 +1,0 @@
-- import_tasks: generic-feature-template.yml
-  run_once: True
-  tags: interface
-  vars:
-    template_list: "{{ Feature_Templates['Interface_Templates'] }}"
-    template: sdwan-templates/feature-interface.j2
-    folder: feature-interface
-  when: Feature_Templates['Interface_Templates'] is defined

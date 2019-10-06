@@ -1,8 +1,0 @@
-- import_tasks: generic-feature-template.yml
-  run_once: True
-  tags: igmp
-  vars:
-    template_list: "{{ Feature_Templates['IGMP_Templates'] }}"
-    template: sdwan-templates/feature-igmp.j2
-    folder: feature-igmp
-  when: Feature_Templates['IGMP_Templates'] is defined

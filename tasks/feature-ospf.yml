@@ -1,8 +1,0 @@
-- import_tasks: generic-feature-template.yml
-  run_once: True
-  tags: ospf
-  vars:
-    template_list: "{{ Feature_Templates['OSPF_Templates'] }}"
-    template: sdwan-templates/feature-ospf.j2
-    folder: feature-ospf
-  when: Feature_Templates['OSPF_Templates'] is defined
