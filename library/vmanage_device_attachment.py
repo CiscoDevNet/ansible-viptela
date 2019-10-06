@@ -16,10 +16,10 @@ def run_module():
     action_status = None
     action_activity = None
     action_config = None
-    
+
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
-    argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
+    argument_spec.update(state=dict(type='str', choices=['absent', 'present','query'], default='present'),
                          device = dict(type='str', required=True),
                          template = dict(type='str'),
                          variables=dict(type='dict', default={}),
@@ -138,7 +138,7 @@ def run_module():
                 action_id = response.json['id']
             else:
                 viptela.fail_json(msg='Did not get action ID after attaching device to template.')
-    else:
+    elif viptela.params['state'] == 'absent':
         if 'templateId' in device_data:
             viptela.result['changed'] = True
             payload = {
@@ -156,7 +156,28 @@ def run_module():
                     action_id = response.json['id']
                 else:
                     viptela.fail_json(msg='Did not get action ID after attaching device to template.')
+    elif viptela.params['state'] == 'query':
+        # Get template data and see if it is a real template
+        device_template_dict = viptela.get_device_template_dict(factory_default=True)
+        if viptela.params['template']:
+            if viptela.params['template'] not in device_template_dict:
+                viptela.fail_json(msg='Template {0} not found.'.format(viptela.params['template']))
+            template_data = device_template_dict[viptela.params['template']]
+        else:
+            viptela.fail_json(msg='Must specify a template with state present')
 
+        payload = {
+            "templateId": template_data['templateId'],
+            "deviceIds": [device_data['uuid']],
+            "isEdited": "false",
+            "isMasterEdited": "false"
+        }
+
+        response = viptela.request('/dataservice/template/device/config/input/', method='POST', payload=payload)
+        if response.json:
+            viptela.result['response'] = response.json
+    else:
+        pass
     # If told, wait for the status of the request and report it
     if viptela.params['wait'] and action_id:
         viptela.waitfor_action_completion(action_id)
