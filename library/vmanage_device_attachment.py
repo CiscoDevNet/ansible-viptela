@@ -68,7 +68,11 @@ def run_module():
             if viptela.params['system_ip']:
                 device_data['deviceIP'] = viptela.params['system_ip']
             else:
+<<<<<<< HEAD
                 viptela.fail_json(msg='system_ip is needed when pre-attaching templates')
+=======
+                viptela.fail_json(msg='system_ip is needed when pre-attaching templates')                
+>>>>>>> 0c7a118cd2d966596bfe68dcb495796621f4da2e
         if 'site-id' not in device_data or len(device_data['site-id']) == 0:
             if viptela.params['site_id']:
                 device_data['site-id'] = viptela.params['site_id']
@@ -78,12 +82,20 @@ def run_module():
             if viptela.params['device_name']:
                 device_data['host-name'] = viptela.params['device_name']
             else:
+<<<<<<< HEAD
                 viptela.fail_json(msg='device_name is needed when pre-attaching templates')
+=======
+                viptela.fail_json(msg='device_name is needed when pre-attaching templates')                       
+>>>>>>> 0c7a118cd2d966596bfe68dcb495796621f4da2e
     elif viptela.params['device_name']:
         device_status = viptela.get_device_status(viptela.params['device_name'], key='host-name')
         if 'uuid' in device_status:
             device_type = 'controllers' if device_status['personality'] in ['vmanage', 'vbond', 'vsmart'] else 'vedges'
+<<<<<<< HEAD
             device_data = viptela.get_device_by_uuid(device_status['uuid'], type=device_type)
+=======
+            device_data = viptela.get_device_by_uuid(device_status['uuid'], type=device_type) 
+>>>>>>> 0c7a118cd2d966596bfe68dcb495796621f4da2e
         else:
             viptela.fail_json(msg='Cannot find device with name: {0}.'.format(viptela.params['device']))
 
@@ -205,4 +217,8 @@ def main():
     run_module()
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     main()
+=======
+    main()
+>>>>>>> 0c7a118cd2d966596bfe68dcb495796621f4da2e
