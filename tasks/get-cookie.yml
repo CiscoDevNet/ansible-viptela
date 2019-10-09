@@ -38,6 +38,7 @@
   no_log: false  # Don't show output as your password will be on the URI string
   register: login_results
   delegate_to: localhost
+  until: login_results.set_cookie is defined
   when: (viptela_api_cookie is not defined) or (login_results.msg is not search('OK'))
   retries: 60
   delay: 10
