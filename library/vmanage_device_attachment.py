@@ -19,12 +19,23 @@ def run_module():
 
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    argument_spec.update(state=dict(type='str', choices=['absent', 'present','query'], default='present'),
+                         device = dict(type='str', required=True),
+=======
+>>>>>>> master
     argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
                          device_name = dict(type='str', aliases=['device', 'host-name']),
                          device_ip = dict(type='str', aliases=['system_ip']),
                          site_id = dict(type='str'),
                          uuid = dict(type='str'),
                          personality=dict(type='str', choices=['vmanage', 'vsmart', 'vbond', 'vedge'], default='vedge'),
+<<<<<<< HEAD
+=======
+>>>>>>> 22d7fec539a2fff6e6fbbf4e19307709815627da
+>>>>>>> master
                          template = dict(type='str'),
                          variables=dict(type='dict', default={}),
                          wait=dict(type='bool', default=False),
@@ -218,7 +229,52 @@ def main():
 
 if __name__ == '__main__':
 <<<<<<< HEAD
+<<<<<<< HEAD
     main()
 =======
     main()
 >>>>>>> 0c7a118cd2d966596bfe68dcb495796621f4da2e
+=======
+    main()
+
+# {
+#     "deviceType":"vedge",
+#     "devices":[
+#         {
+#             "deviceId":"9c74c69e-acba-41dd-811a-5ab0e3086786",
+#             "deviceIP":"10.255.110.1"
+#         }
+#     ]
+# }
+
+#{
+#  "deviceTemplateList":
+#  [
+#    {
+#      "templateId":"da237d75-4aa1-438e-918c-3b2b80850925",
+#      "device": [
+#        {
+#          "csv-status":"complete",
+#          "csv-deviceId":"9c74c69e-acba-41dd-811a-5ab0e3086786",
+#          "csv-deviceIP":"10.255.110.1",
+#          "csv-host-name":"site1-vedge1",
+#          "/11/ge0/2/interface/ip/address":"172.22.2.1/24",
+#          "/10/ge0/1/interface/ip/address":"172.22.1.1/24",
+#          "/0/vpn-instance/ip/route/0.0.0.0/0/next-hop/vpn0_default_gateway/address":"172.16.22.1",
+#          "/0/ge0/0/interface/ip/address":"172.16.22.2/24",
+#          "/0/ge0/0/interface/tunnel-interface/color/value":"public-internet",
+#          "//system/host-name":"site1-vedge1",
+#          "//system/system-ip":"10.255.110.1",
+#          "//system/site-id":"110",
+#          "csv-templateId":"da237d75-4aa1-438e-918c-3b2b80850925"
+#        }
+#      ],
+#      "isEdited":false,
+#      "isMasterEdited":false
+#    }
+#  ]
+#}
+=======
+    main()
+>>>>>>> 22d7fec539a2fff6e6fbbf4e19307709815627da
+>>>>>>> master
