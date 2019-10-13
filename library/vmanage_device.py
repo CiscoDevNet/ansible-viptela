@@ -15,7 +15,7 @@ def run_module():
     argument_spec = viptela_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
                          name=dict(type='str'),
-                         system_ip=dict(type='str', aliases=['device_ip']),
+                         transport_ip=dict(type='str', aliases=['device_ip', 'system_ip']),
                          uuid=dict(type='str', alias='deviceIP'),
                          personality=dict(type='str', choices=['vmanage', 'vsmart', 'vbond', 'vedge'], default='vedge'),
                          device_username=dict(type='str', alias='device_user'),
@@ -50,8 +50,8 @@ def run_module():
     if viptela.params['uuid']:
         device = viptela.get_device_status(viptela.params['uuid'], key='uuid')
     # See if we can find the device by deviceIP
-    if not device and viptela.params['system_ip']:
-        device = viptela.get_device_status(viptela.params['system_ip'])
+    if not device and viptela.params['transport_ip']:
+        device = viptela.get_device_status(viptela.params['transport_ip'])
     # If we could not find the device by deviceIP, see if we can find it be (host)name
     if not device and viptela.params['name']:
         device = viptela.get_device_status(viptela.params['name'], key='host-name')
@@ -66,7 +66,7 @@ def run_module():
             if not viptela.params['device_username'] or not viptela.params['device_password']:
                 viptela.fail_json(msg="device_username and device_password must be specified when add a new device")
             if not module.check_mode:
-                response = viptela.create_controller(viptela.params['system_ip'], viptela.params['personality'],
+                response = viptela.create_controller(viptela.params['transport_ip'], viptela.params['personality'],
                     viptela.params['device_username'], viptela.params['device_password'])
                 viptela.result['response'] = response
     else:
