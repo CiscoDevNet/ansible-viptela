@@ -14,7 +14,7 @@ def run_module():
     argument_spec = viptela_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['csr', 'cert', 'push'], default='cert'),
                          name=dict(type='str'),
-                         device_ip=dict(type='str'),
+                         transport_ip=dict(type='str', aliases=['device_ip', 'system_ip']),
                          cert=dict(type='str', alias='deviceEnterpriseCertificate'),
                          )
 
@@ -39,8 +39,8 @@ def run_module():
 
     device = {}
     # See if we can find the device by deviceIP
-    if viptela.params['device_ip']:
-        device = viptela.get_device_by_device_ip(viptela.params['device_ip'], type='controllers')
+    if viptela.params['transport_ip']:
+        device = viptela.get_device_by_device_ip(viptela.params['transport_ip'], type='controllers')
     # If we could not find the device by deviceIP, see if we can find it be (host)name
     if not device:
         device = viptela.get_device_by_name(viptela.params['name'], type='controllers')
@@ -64,7 +64,10 @@ def run_module():
         else:
             viptela.result['what_changed'].append('csr')
             if not module.check_mode:
-                viptela.result['deviceCSR'] = viptela.generate_csr(device['deviceIP'])           
+                if 'deviceIP' in device:
+                    viptela.result['deviceCSR'] = viptela.generate_csr(device['deviceIP'])
+                else:
+                    viptela.fail_json(msg="Cannot find deviceIP for {0}".format(viptela.params['name']))     
     elif viptela.params['state'] == 'push':
         viptela.push_certificates()
 

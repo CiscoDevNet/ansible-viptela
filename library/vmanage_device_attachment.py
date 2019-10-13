@@ -19,8 +19,17 @@ def run_module():
 
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
+<<<<<<< HEAD
     argument_spec.update(state=dict(type='str', choices=['absent', 'present','query'], default='present'),
                          device = dict(type='str', required=True),
+=======
+    argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
+                         device_name = dict(type='str', aliases=['device', 'host-name']),
+                         device_ip = dict(type='str', aliases=['system_ip']),
+                         site_id = dict(type='str'),
+                         uuid = dict(type='str'),
+                         personality=dict(type='str', choices=['vmanage', 'vsmart', 'vbond', 'vedge'], default='vedge'),
+>>>>>>> 22d7fec539a2fff6e6fbbf4e19307709815627da
                          template = dict(type='str'),
                          variables=dict(type='dict', default={}),
                          wait=dict(type='bool', default=False),
@@ -43,17 +52,45 @@ def run_module():
                            supports_check_mode=True,
                            )
     viptela = viptelaModule(module)
+    viptela.result['what_changed'] = []
 
-    # First, get the list of vedges and see if this device is in the list
-    devices = viptela.get_device_dict('vedges')
-    if viptela.params['device'] not in devices:
-        # Next, get the list of controllers and see if this device is in the list
-        devices = viptela.get_device_dict('controllers')
-        if viptela.params['device'] not in devices:
-            # This device is neither a vedge or a controller, so error and inform accordingly
-            viptela.fail_json(msg='Device {0} not found.'.format(viptela.params['device']))
+    if viptela.params['personality'] == 'vedge':
+        device_type = 'vedges'
+    else:
+        device_type = 'controllers'
 
-    device_data = devices[viptela.params['device']]
+    if viptela.params['uuid']:
+        device_data = viptela.get_device_by_uuid(viptela.params['uuid'], type=device_type)
+        if 'uuid' not in device_data:
+            viptela.fail_json(msg='Cannot find device with UUID: {0}.'.format(viptela.params['uuid']))
+        # If this is a preallocation, we need to set these things.
+        if 'system-ip' not in device_data or len(device_data['system-ip']) == 0:
+            if viptela.params['system_ip']:
+                device_data['system-ip'] = viptela.params['system_ip']
+            else:
+                viptela.fail_json(msg='system_ip is needed when pre-attaching templates')
+        if 'deviceIP' not in device_data or len(device_data['deviceIP']) == 0:
+            if viptela.params['system_ip']:
+                device_data['deviceIP'] = viptela.params['system_ip']
+            else:
+                viptela.fail_json(msg='system_ip is needed when pre-attaching templates')                
+        if 'site-id' not in device_data or len(device_data['site-id']) == 0:
+            if viptela.params['site_id']:
+                device_data['site-id'] = viptela.params['site_id']
+            else:
+                viptela.fail_json(msg='site_id is needed when pre-attaching templates')
+        if 'host-name' not in device_data or len(device_data['host-name']) == 0:
+            if viptela.params['device_name']:
+                device_data['host-name'] = viptela.params['device_name']
+            else:
+                viptela.fail_json(msg='device_name is needed when pre-attaching templates')                       
+    elif viptela.params['device_name']:
+        device_status = viptela.get_device_status(viptela.params['device_name'], key='host-name')
+        if 'uuid' in device_status:
+            device_type = 'controllers' if device_status['personality'] in ['vmanage', 'vbond', 'vsmart'] else 'vedges'
+            device_data = viptela.get_device_by_uuid(device_status['uuid'], type=device_type) 
+        else:
+            viptela.fail_json(msg='Cannot find device with name: {0}.'.format(viptela.params['device']))
 
     if viptela.params['state'] == 'present':
         if ('system-ip' not in device_data):
@@ -71,6 +108,7 @@ def run_module():
             viptela.fail_json(msg='Must specify a template with state present')
 
         # Make sure they passed in the required variables
+        # get_template_variables provides a variable name -> property mapping
         template_variables = viptela.get_template_variables(device_template_dict[viptela.params['template']]['templateId'])
         if template_variables:
             if viptela.params['variables']:
@@ -78,15 +116,15 @@ def run_module():
                     if variable not in viptela.params['variables']:
                         viptela.fail_json(msg='Template {0} requires variables: {1}'.format(viptela.params['template'], ', '.join(template_variables)))
 
+        viptela.result['template_variables'] = template_variables
 
         # Construct the variable payload
         device_template_variables = {
                 "csv-status": "complete",
                 "csv-deviceId": device_data['uuid'],
                 "csv-deviceIP": device_data['deviceIP'],
-                "csv-host-name": viptela.params['device'],
-                # "csv-templateId": template_data['templateId'],
-                '//system/host-name': viptela.params['device'],
+                "csv-host-name": device_data['host-name'],
+                '//system/host-name': device_data['host-name'],
                 '//system/system-ip': device_data['system-ip'],
                 '//system/site-id': device_data['site-id'],
             }
@@ -99,7 +137,9 @@ def run_module():
                 property = template_variables[key]
                 device_template_variables[property] = viptela.params['variables'][key]
 
-        if viptela.params['device'] in template_data['attached_devices']:
+        attached_uuid_list = viptela.get_template_attachments(template_data['templateId'], key='uuid')
+
+        if device_data['uuid'] in attached_uuid_list:
             # Add the template ID to the device's variable payload because we'll need it for comparison and update.
             # device_template_variables['csv-templateId'] = template_data['templateId']
             # The device is already attached to the template.  We need to see if any of the input changed, so we make
@@ -112,12 +152,14 @@ def run_module():
             }
             response = viptela.request('/dataservice/template/device/config/input/', method='POST', payload=payload)
             if response.json and 'data' in response.json:
-                if response.json['data'][0] != device_template_variables:
-                    viptela.result['changed'] = True
-                    viptela.result['current_variables'] = response.json['data']
-                    viptela.result['new_variables'] = device_template_variables
-                else:
-                    viptela.result['changed'] = False
+                current_variables = response.json['data'][0]
+                # viptela.result['old'] = current_variables
+                # viptela.result['new'] = device_template_variables
+                # Convert both to a string and compare.  For some reason, there can be an int/str
+                # mismatch.  It might be indicative of a problem...
+                for property in device_template_variables:
+                    if str(device_template_variables[property]) != str(current_variables[property]):
+                        break
         else:
             viptela.result['changed'] = True
 
@@ -189,6 +231,7 @@ def main():
     run_module()
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     main()
 
 # {
@@ -228,3 +271,6 @@ if __name__ == '__main__':
 #    }
 #  ]
 #}
+=======
+    main()
+>>>>>>> 22d7fec539a2fff6e6fbbf4e19307709815627da
