@@ -107,7 +107,7 @@ This role can perform the following functions:
 
 #### Arguments:
 
-* `uuid`: UUID of the device 
+* `uuid`: UUID of the device
 
 
 ### Get Device Template Facts
@@ -198,7 +198,7 @@ Create or delete a device template
     password: "{{ ansible_password }}"
     device: site1-vedge1
     template: colo_vedge
-    variables: 
+    variables:
       vpn11_ipv4_address: 172.22.2.1/24
       vpn10_ipv4_address: 172.22.1.1/24
       vpn0_internet_ipv4_address: 172.16.22.2/24
@@ -211,7 +211,7 @@ Attach/Detach template to/from device
 
 #### Arguments:
 * `state`: The state of the attachment: `absent` or `present`
-* `device`: The name of the device to which 
+* `device`: The name of the device to which
 * `template`: The name of the template to apply
 * `variables`: The variable required by the template.  (See vmanage_device_template_facts for required variables)
 * `wait`: Wait for the application of the template to succeed or fail.
@@ -228,7 +228,7 @@ Attach/Detach template to/from device
     entries:
       - ipPrefix: 10.0.1.0/24
       - ipPrefix: 10.0.2.0/24
-      - ipPrefix: 10.0.3.0/24 
+      - ipPrefix: 10.0.3.0/24
     state: present
     aggregate: "{{ item.value }}"
 ```
@@ -338,7 +338,7 @@ Retrieve policy definition facts
 
 ### Get status of a device action:
 ```yaml
-- vmanange_device_action_status:
+- vmanage_device_action_status:
     user: "{{ ansible_user }}"
     host: "{{ vmanage_ip }}"
     password: "{{ ansible_password }}"
