@@ -19,7 +19,7 @@ def run_module():
     
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
-    argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
+    argument_spec.update(state=dict(type='str', choices=['absent', 'present','query'], default='present'),
                          device_name = dict(type='str', aliases=['device', 'host-name']),
                          device_ip = dict(type='str', aliases=['system_ip']),
                          site_id = dict(type='str'),
@@ -175,7 +175,7 @@ def run_module():
                 action_id = response.json['id']
             else:
                 viptela.fail_json(msg='Did not get action ID after attaching device to template.')
-    else:
+    elif viptela.params['state'] == 'absent':
         if 'templateId' in device_data:
             viptela.result['changed'] = True
             payload = {
@@ -193,6 +193,22 @@ def run_module():
                     action_id = response.json['id']
                 else:
                     viptela.fail_json(msg='Did not get action ID after attaching device to template.')
+
+    elif viptela.params['state'] == 'query':
+        # Get template data and see if it is a real template
+        device_template_dict = viptela.get_device_template_dict(factory_default=True)
+        if viptela.params['template']:
+            if viptela.params['template'] not in device_template_dict:
+                viptela.fail_json(msg='Template {0} not found.'.format(viptela.params['template']))
+            template_data = device_template_dict[viptela.params['template']]
+        else:
+            viptela.fail_json(msg='Must specify a template with state present')
+
+        # get_template_variables provides a variable name -> property mapping
+        template_variables = viptela.get_template_variables(device_template_dict[viptela.params['template']]['templateId'])
+
+        viptela.result['template_variables'] = template_variables
+
 
     # If told, wait for the status of the request and report it
     if viptela.params['wait'] and action_id:
