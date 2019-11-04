@@ -646,9 +646,11 @@ class viptelaModule(object):
 
                 for column in column_list:
                     if column['editable']:
-                        match = regex.search(column['title'])
+                        #match = regex.search(column['title'])
+                        match = regex.findall(column['title'])
                         if match:
-                            variable = match.groups('variable')[0]
+                            #variable = match.groups('variable')[0]
+                            variable = match[-1]
                             return_dict[variable] = column['property']
 
         return return_dict
