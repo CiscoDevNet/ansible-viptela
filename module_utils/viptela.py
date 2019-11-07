@@ -655,6 +655,34 @@ class viptelaModule(object):
 
         return return_dict
 
+
+    def get_template_optional_variables(self, template_id):
+        payload = {
+            "deviceIds": [],
+            "isEdited": False,
+            "isMasterEdited": False,
+            "templateId": template_id
+        }
+        return_dict = {}
+        response = self.request('/dataservice/template/device/config/input', method='POST', payload=payload)
+
+        if response.json:
+            if 'header' in response.json and 'columns' in response.json['header']:
+                column_list = response.json['header']['columns']
+
+                regex = re.compile(r'\((?P<variable>[^(]+)\)')
+
+                for column in column_list:
+                    if column['editable'] and column['optional']:
+                        #match = regex.search(column['title'])
+                        match = regex.findall(column['title'])
+                        if match:
+                            #variable = match.groups('variable')[0]
+                            variable = match[-1]
+                            return_dict[variable] = column['property']
+
+        return return_dict
+
     def get_software_images_list(self):
         #TODO undertand the difference with the URL: /dataservice/device/action/software/images used in devnetsandbox
         response = self.request('/dataservice/device/action/software', method='GET')

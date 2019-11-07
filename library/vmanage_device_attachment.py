@@ -16,7 +16,7 @@ def run_module():
     action_status = None
     action_activity = None
     action_config = None
-    
+
     # define available arguments/parameters a user can pass to the module
     argument_spec = viptela_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'present','query'], default='present'),
@@ -68,7 +68,7 @@ def run_module():
             if viptela.params['system_ip']:
                 device_data['deviceIP'] = viptela.params['system_ip']
             else:
-                viptela.fail_json(msg='system_ip is needed when pre-attaching templates')                
+                viptela.fail_json(msg='system_ip is needed when pre-attaching templates')
         if 'site-id' not in device_data or len(device_data['site-id']) == 0:
             if viptela.params['site_id']:
                 device_data['site-id'] = viptela.params['site_id']
@@ -78,12 +78,12 @@ def run_module():
             if viptela.params['device_name']:
                 device_data['host-name'] = viptela.params['device_name']
             else:
-                viptela.fail_json(msg='device_name is needed when pre-attaching templates')                       
+                viptela.fail_json(msg='device_name is needed when pre-attaching templates')
     elif viptela.params['device_name']:
         device_status = viptela.get_device_status(viptela.params['device_name'], key='host-name')
         if 'uuid' in device_status:
             device_type = 'controllers' if device_status['personality'] in ['vmanage', 'vbond', 'vsmart'] else 'vedges'
-            device_data = viptela.get_device_by_uuid(device_status['uuid'], type=device_type) 
+            device_data = viptela.get_device_by_uuid(device_status['uuid'], type=device_type)
         else:
             viptela.fail_json(msg='Cannot find device with name: {0}.'.format(viptela.params['device']))
 
@@ -206,9 +206,9 @@ def run_module():
 
         # get_template_variables provides a variable name -> property mapping
         template_variables = viptela.get_template_variables(device_template_dict[viptela.params['template']]['templateId'])
-
+        optional_template_variables = viptela.get_template_optional_variables(device_template_dict[viptela.params['template']]['templateId'])
         viptela.result['template_variables'] = template_variables
-
+        viptela.result['optional_template_variables'] = optional_template_variables
 
     # If told, wait for the status of the request and report it
     if viptela.params['wait'] and action_id:
