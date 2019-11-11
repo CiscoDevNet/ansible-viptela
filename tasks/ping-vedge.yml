@@ -1,0 +1,19 @@
+- vmanage_nping:
+    user: "{{ vmanage_user }}"
+    host: "{{ vmanage_ip }}"
+    password: "{{ vmanage_pass }}"
+    dst_ip: "{{ ping_dst_ip }}"
+    vedge: "{{ ping_vedge }}"
+    vpn: "{{ ping_vpn }}"
+    count: "{{ ping_count | default(5) }}"
+    rapid: yes
+  register: nping
+  delegate_to: localhost
+
+- set_fact:
+    ping_rx: "{{ nping.json.packetsTransmitted }}"
+    ping_tx: "{{ nping.json.packetsReceived }}"
+    ping_loss: "{{ nping.json.lossPercentage }}"
+    ping_rtt_min: "{{ nping.json.minRoundTrip }}"
+    ping_rtt_max: "{{ nping.json.maxRoundTrip }}"
+    ping_rtt_avg: "{{ nping.json.avgRoundTrip }}"
