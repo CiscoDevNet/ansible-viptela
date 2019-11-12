@@ -14,7 +14,7 @@ pipeline {
         VIRL_PASSWORD = credentials('cpn-virl-password')
         VIRL_HOST = credentials('cpn-virl-host')
         VIRL_LAB = "jenkins_ansible-viptela"
-        VIPTELA_ORG = credentials('viptela-org')
+        VMANAGE_ORG = credentials('viptela-org')
         LICENSE_TOKEN = credentials('license-token')
         HOME = "${WORKSPACE}"
         DEFAULT_LOCAL_TMP = "${WORKSPACE}/ansible"
