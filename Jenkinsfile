@@ -7,13 +7,13 @@ pipeline {
     }
     options {
       disableConcurrentBuilds()
-      lock resource: 'jenkins_sdwan'
+      lock resource: 'jenkins_testing'
     }
     environment {
         VIRL_USERNAME = credentials('cpn-virl-username')
         VIRL_PASSWORD = credentials('cpn-virl-password')
         VIRL_HOST = credentials('cpn-virl-host')
-        VIRL_SESSION = "jenkins_sdwan"
+        VIRL_LAB = "jenkins_ansible-viptela"
         VIPTELA_ORG = credentials('viptela-org')
         LICENSE_TOKEN = credentials('license-token')
         HOME = "${WORKSPACE}"
@@ -53,36 +53,30 @@ pipeline {
         }
         stage('Build VIRL Topology') {
            steps {
+                echo 'Create local CA...'
+                ansiblePlaybook disableHostKeyChecking: true, playbook: 'build-ca.yml'                    
                 echo 'Running build.yml...'
-                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'build.yml'
-                echo 'Configure licensing...'
-                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', extras: "-e license_token=${LICENSE_TOKEN}", playbook: 'configure-licensing.yml'
+                ansiblePlaybook disableHostKeyChecking: true, playbook: 'build-virl.yml'
            }
         }
         stage('Configure SD-WAN Fabric') {
            steps {
-                echo 'Configure SD-WAN Fabric'
+                echo 'Configure Viptela Control Plane...'
                 withCredentials([file(credentialsId: 'viptela-serial-file', variable: 'VIPTELA_SERIAL_FILE')]) {
-                    ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', extras: '-e virl_tag=jenkins -e \'organization_name="${VIPTELA_ORG}"\' -e serial_number_file=${VIPTELA_SERIAL_FILE} -e viptela_cert_dir=${WORKSPACE}/myCA', playbook: 'configure.yml'
+                    ansiblePlaybook disableHostKeyChecking: true, extras: '-e sdwan_serial_file=${VIPTELA_SERIAL_FILE}', playbook: 'config-virl.yml'
                 }
-                echo 'Waiting for vEdges to Sync...'
-                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'waitfor-sync.yml'                
-                echo 'Loading Templates...'
-                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'import-templates.yml'
-                echo 'Attaching Templates...'
-                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'attach-template.yml'
-                echo 'Loading Policy...'
-                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'import-policy.yml'
-                echo 'Activating Policy...'
-                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'activate-policy.yml'
+                echo 'Deploying edges...'
+                ansiblePlaybook disableHostKeyChecking: true, playbook: 'deploy-virl.yml'
            }
         }
         stage('Running Tests') {
            steps {
                 echo 'Check SD-WAN...'
-                ansiblePlaybook disableHostKeyChecking: true, inventory: 'inventory/crn1', playbook: 'check-sdwan.yml'
+                ansiblePlaybook disableHostKeyChecking: true, playbook: 'waitfor-sync.yml'
+                echo 'Check SD-WAN...'
+                ansiblePlaybook disableHostKeyChecking: true, playbook: 'check-sdwan.yml'
            }
-        }    
+        }  
     }    
     post {
         always {
