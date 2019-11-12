@@ -80,7 +80,7 @@ pipeline {
     }    
     post {
         always {
-            ansiblePlaybook disableHostKeyChecking: true, playbook: 'clean.yml'
+            ansiblePlaybook disableHostKeyChecking: true, playbook: 'clean-virl.yml'
             cleanWs()
         }
     }          
