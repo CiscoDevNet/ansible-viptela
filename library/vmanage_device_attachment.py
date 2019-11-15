@@ -202,7 +202,7 @@ def run_module():
                 viptela.fail_json(msg='Template {0} not found.'.format(viptela.params['template']))
             template_data = device_template_dict[viptela.params['template']]
         else:
-            viptela.fail_json(msg='Must specify a template with state present')
+            viptela.fail_json(msg='Must specify a template with state query')
 
         # get_template_variables provides a variable name -> property mapping
         template_variables = viptela.get_template_variables(device_template_dict[viptela.params['template']]['templateId'])
