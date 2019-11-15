@@ -672,14 +672,58 @@ class viptelaModule(object):
 
                 regex = re.compile(r'\((?P<variable>[^(]+)\)')
 
+                # The following can be removed once the API will mark as optional
+                # the nexthop value of a static route that has been marked as optional
+                regexYangStaticR = re.compile(r'.*/vpn-instance/ip/route/.*/prefix')
+                regex_yang_nexthop = re.compile(r'.*/vpn-instance/ip/route/(?P<staticR>.*)/next-hop/.*/address')
+                optionalStaticRoutesList = []
+                # Until here
                 for column in column_list:
-                    if column['editable'] and column['optional']:
-                        #match = regex.search(column['title'])
+
+                    # The following can be removed once the API will mark as optional
+                    # the nexthop value of a static route that has been marked as optional
+
+                    # Based on the regular expression above we match
+                    # static routes and next-hop variables based on the YANG variable
+                    # a static route looks like this /1/vpn-instance/ip/route/<COMMON_NAME_OF_THE_ROUTE>/prefix
+                    # a next-hop looks like this /1/vpn-instance/ip/route/<COMMON_NAME_OF_THE_ROUTE>/next-hop/<COMMON_NAME_OF_THE_NH>/address
+
+                    # If we find a static route and this is optional we
+                    # store its common name into an array
+                    # we don't add this parameter to the return list now
+                    # since it will be added later
+                    isStaticR = regexYangStaticR.match(column['property'])
+                    if isStaticR and column['optional']:
                         match = regex.findall(column['title'])
                         if match:
-                            #variable = match.groups('variable')[0]
+                            variable = match[-1]
+                            optionalStaticRoutesList.append(variable)
+
+
+                    # If we find a next-hop we extrapolate the common name
+                    # of the static route. If we have already found that
+                    # common name and we know it is optional we will add
+                    # this next-hop paramter to the return list since it
+                    # will be optional as well
+                    
+                    # ALL OF THIS IS BASED ON THE ASSUMPTION THAT STATIC ROUTES
+                    # ARE LISTED BEFORE NEXT-HOP VALUES
+                    nextHopStaticR = regex_yang_nexthop.findall(column['property'])
+                    if nextHopStaticR:
+                        if nextHopStaticR[0] in optionalStaticRoutesList:
+                            match = regex.findall(column['title'])
+                            if match:
+                                variable = match[-1]
+                                return_dict[variable] = column['property']
+
+                    # Until here
+
+                    if column['editable'] and column['optional']:
+                        match = regex.findall(column['title'])
+                        if match:
                             variable = match[-1]
                             return_dict[variable] = column['property']
+
 
         return return_dict
 
