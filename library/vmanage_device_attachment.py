@@ -105,9 +105,11 @@ def run_module():
         # Make sure they passed in the required variables
         # get_template_variables provides a variable name -> property mapping
         template_variables = viptela.get_template_variables(device_template_dict[viptela.params['template']]['templateId'])
-        if template_variables:
+        optional_template_variables = viptela.get_template_optional_variables(device_template_dict[viptela.params['template']]['templateId'])
+        mandatory_template_variables = {k: template_variables[k] for k in set(template_variables) - set(optional_template_variables)}
+        if mandatory_template_variables:
             if viptela.params['variables']:
-                for variable in template_variables:
+                for variable in mandatory_template_variables:
                     if variable not in viptela.params['variables']:
                         viptela.fail_json(msg='Template {0} requires variables: {1}'.format(viptela.params['template'], ', '.join(template_variables)))
 
