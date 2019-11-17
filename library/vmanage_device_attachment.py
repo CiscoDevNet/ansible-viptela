@@ -209,7 +209,7 @@ def run_module():
         optional_template_variables = viptela.get_template_optional_variables(device_template_dict[viptela.params['template']]['templateId'])
         viptela.result['template_variables'] = template_variables
         viptela.result['optional_template_variables'] = optional_template_variables
-
+        viptela.result['mandatory_template_variables'] = {k: template_variables[k] for k in set(template_variables) - set(optional_template_variables)}
     # If told, wait for the status of the request and report it
     if viptela.params['wait'] and action_id:
         viptela.waitfor_action_completion(action_id)
