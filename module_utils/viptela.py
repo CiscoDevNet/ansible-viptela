@@ -678,6 +678,17 @@ class viptelaModule(object):
                 regex_yang_nexthop = re.compile(r'.*/vpn-instance/ip/route/(?P<staticR>.*)/next-hop/.*/address')
                 optionalStaticRoutesList = []
                 # Until here
+
+                # The following can be removed once the API will mark as optional
+                # all the vrrp attributes once the vrrp grp-id has been marked optional
+                regexYangVRRPgrpID = re.compile(r'.*/vrrp/.*/grp-id')
+                regexYangVRRPpriority = re.compile(r'.*/vrrp/(?P<VVRPgrp>.*)/priority')
+                regexYangVRRPtimer = re.compile(r'.*/vrrp/(?P<VVRPgrp>.*)/timer')
+                regexYangVRRPtrackPrefix = re.compile(r'.*/vrrp/(?P<VVRPgrp>.*)/track-prefix-list')
+                regexYangVRRPipAddress = re.compile(r'.*/vrrp/(?P<VVRPgrp>.*)/ipv4/address')
+                optionalVRRPvariales = []
+                # Until here
+
                 for column in column_list:
 
                     # The following can be removed once the API will mark as optional
@@ -716,6 +727,63 @@ class viptelaModule(object):
                                 variable = match[-1]
                                 return_dict[variable] = column['property']
 
+                    # Until here
+
+                    # The following can be removed once the API will mark as optional
+                    # the attributes for vrrp as optional if the whole vrrp has been
+                    # marked as optional
+
+                    # Based on the regular expression above we match
+                    # vrrp atributes based on the YANG variable
+
+                    # If we find a VRRP grp ID and this is optional we
+                    # store its common name into an array
+                    # we don't add this parameter to the return list now
+                    # since it will be added later
+                    isVRRP = regexYangVRRPgrpID.match(column['property'])
+                    if isVRRP and column['optional']:
+                        match = regex.findall(column['title'])
+                        if match:
+                            variable = match[-1]
+                            optionalVRRPvariales.append(variable)
+
+
+                    # If we find a any vrrp attribute we extrapolate the common name
+                    # If we have already found that
+                    # common name and we know it is optional we will add
+                    # this paramter to the return list since it
+                    # will be optional as well
+
+                    # ALL OF THIS IS BASED ON THE ASSUMPTION THAT VRRP GRP-ID is
+                    # LISTED BEFORE ALL THE OTHER ATTRIBUTES
+                    VRRPpriority = regexYangVRRPpriority.findall(column['property'])
+                    VRRPtimer = regexYangVRRPtimer.findall(column['property'])
+                    VRRPtrackPrefix = regexYangVRRPtrackPrefix.findall(column['property'])
+                    VRRPipAddress = regexYangVRRPipAddress.findall(column['property'])
+                    if VRRPpriority:
+                        if VRRPpriority[0] in optionalVRRPvariales:
+                            match = regex.findall(column['title'])
+                            if match:
+                                variable = match[-1]
+                                return_dict[variable] = column['property']
+                    elif VRRPtimer:
+                        if VRRPtimer[0] in optionalVRRPvariales:
+                            match = regex.findall(column['title'])
+                            if match:
+                                variable = match[-1]
+                                return_dict[variable] = column['property']
+                    elif VRRPtrackPrefix:
+                        if VRRPtrackPrefix[0] in optionalVRRPvariales:
+                            match = regex.findall(column['title'])
+                            if match:
+                                variable = match[-1]
+                                return_dict[variable] = column['property']
+                    elif VRRPipAddress:
+                        if VRRPipAddress[0] in optionalVRRPvariales:
+                            match = regex.findall(column['title'])
+                            if match:
+                                variable = match[-1]
+                                return_dict[variable] = column['property']
                     # Until here
 
                     if column['editable'] and column['optional']:
