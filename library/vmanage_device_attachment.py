@@ -132,10 +132,14 @@ def run_module():
         for key, value in viptela.params['variables'].items():
             if key in template_variables:
                 property = template_variables[key]
-                # TODO IN 19.2 the optional variables that are not referneced
-                # need to be passed as 'property': 'TEMPLATE_IGNORE'
-                # in 18.4 this is not necessary, it is sufficient to ignore the variable
                 device_template_variables[property] = viptela.params['variables'][key]
+
+        # When dealing with optional parameters if we do not have explicitely set a value for it
+        # we must add the optional parameter to the payload with { key: 'TEMPLATE_IGNORE'}
+        for key, value in optional_template_variables.items():
+            property = template_variables[key]
+            if property not in device_template_variables:
+                device_template_variables[property] = 'TEMPLATE_IGNORE'
 
         attached_uuid_list = viptela.get_template_attachments(template_data['templateId'], key='uuid')
 
