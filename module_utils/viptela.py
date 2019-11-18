@@ -689,6 +689,15 @@ class viptelaModule(object):
                 optionalVRRPvariales = []
                 # Until here
 
+                # The following can be removed once the API will mark as optional
+                # all the logging attributes once the logging has been marked optional
+                regexYangLoggingServerName = re.compile(r'///logging/server/.*/name')
+                regexYangLoggingSourceInt = re.compile(r'///logging/server/(?P<LoggServer>.*)/source-interface')
+                regexYangLoggingVPN  = re.compile(r'///logging/server/(?P<LoggServer>.*)/vpn')
+                regexYangLoggingPriority = re.compile(r'///logging/server/(?P<LoggServer>.*)/priority')
+                optionalLoggingVariales = []
+                # Until here
+
                 for column in column_list:
 
                     # The following can be removed once the API will mark as optional
@@ -784,6 +793,39 @@ class viptelaModule(object):
                             if match:
                                 variable = match[-1]
                                 return_dict[variable] = column['property']
+                    # Until here
+
+                    # Same logic for logging optional variables
+                    isLogging = regexYangLoggingServerName.match(column['property'])
+                    if isLogging and column['optional']:
+                        match = regex.findall(column['title'])
+                        if match:
+                            variable = match[-1]
+                            optionalLoggingVariales.append(variable)
+
+                    LoggingSourceInt = regexYangLoggingSourceInt.findall(column['property'])
+                    LoggingVPN = regexYangLoggingVPN.findall(column['property'])
+                    LoggingPriority = regexYangLoggingPriority.findall(column['property'])
+
+                    if LoggingSourceInt:
+                        if LoggingSourceInt[0] in optionalLoggingVariales:
+                            match = regex.findall(column['title'])
+                            if match:
+                                variable = match[-1]
+                                return_dict[variable] = column['property']
+                    elif LoggingVPN:
+                        if LoggingVPN[0] in optionalLoggingVariales:
+                            match = regex.findall(column['title'])
+                            if match:
+                                variable = match[-1]
+                                return_dict[variable] = column['property']
+                    elif LoggingPriority:
+                        if LoggingPriority[0] in optionalLoggingVariales:
+                            match = regex.findall(column['title'])
+                            if match:
+                                variable = match[-1]
+                                return_dict[variable] = column['property']
+
                     # Until here
 
                     if column['editable'] and column['optional']:
