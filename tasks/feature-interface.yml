@@ -3,7 +3,7 @@
   tags: feature-interface,feature-interface:render,render
   vars:
     template_list: "{{ FeatureTemplates['feature-interface'] }}"
-    template: sdwan-templates/feature-interface-vedge.j2
+    template: sdwan-templates/feature-interface.j2
     folder: feature-interface
   when: FeatureTemplates['feature-interface'] is defined
 
@@ -12,7 +12,7 @@
   tags: feature-interface,feature-interface:create,feature-interface:delete,feature-interface:debug
   vars:
     template_list: "{{ FeatureTemplates['feature-interface'] }}"
-    template: sdwan-templates/feature-interface-vedge.j2
+    template: sdwan-templates/feature-interface.j2
     folder: feature-interface
   when: FeatureTemplates['feature-interface'] is defined
 

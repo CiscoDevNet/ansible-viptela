@@ -1,20 +1,14 @@
-- vmanage_nping:
-    user: "{{ ansible_user }}"
-    host: "{{ vmanage_ip }}"
-    password: "{{ ansible_password }}"
-    dst_ip: "{{ ping_dst_ip }}"
-    vedge: "{{ ping_vedge }}"
-    vpn: "{{ ping_vpn }}"
-    count: "{{ ping_count | default(3) }}"
-    rapid: yes
-  register: nping_results
-  delegate_to: localhost
+- set_fact:
+    edge_type: "{{ 'vedge' if hostvars[ping_vedge].sdwan_model is regex('^vedge-[c0-9]') else 'cedge' }}"
+
+- include_tasks:
+    file: "ping-{{ edge_type }}.yml"
 
 - debug:
-    msg: "{{ ping_vedge }}(VPN {{ping_vpn}}) => {{ ping_dst_ip }}: {{ nping_results.json.packetsReceived }}/{{ nping_results.json.packetsTransmitted }}, {{ nping_results.json.lossPercentage }}% loss, Pass(actual/expected) {{ actual_result }}/{{ expected_result }}"
+    msg: "{{ ping_vedge }}(VPN {{ping_vpn}}) => {{ ping_dst_ip }}: {{ ping_rx }}/{{ ping_tx }}, {{ ping_loss }} loss, Pass(actual/expected) {{ actual_result }}/{{ expected_result }}"
   failed_when: actual_result != expected_result
   ignore_errors: True
   vars:
     # actual_result: "{{ True if nping_results.json.lossPercentage <= 25 else False }}"
-    actual_result: "{{ True if nping_results.json.packetsReceived else False }}"
+    actual_result: "{{ True if ping_rx else False }}"
     expected_result: "{{ ping_pass }}"
