@@ -796,7 +796,6 @@ class viptelaModule(object):
                                 variable = match[-1]
                                 return_dict[variable] = column['property']
                     elif VRRPtrackOMP:
-                        if VRRPipAddress[0] in optionalVRRPvariales:
                         if VRRPtrackOMP[0] in optionalVRRPvariales:
                             match = regex.findall(column['title'])
                             if match:
