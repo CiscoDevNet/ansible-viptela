@@ -685,6 +685,7 @@ class viptelaModule(object):
                 regexYangVRRPpriority = re.compile(r'.*/vrrp/(?P<VVRPgrp>.*)/priority')
                 regexYangVRRPtimer = re.compile(r'.*/vrrp/(?P<VVRPgrp>.*)/timer')
                 regexYangVRRPtrackPrefix = re.compile(r'.*/vrrp/(?P<VVRPgrp>.*)/track-prefix-list')
+                regexYangVRRPtrackOMP = re.compile(r'.*/vrrp/(?P<VVRPgrp>.*)/track-omp')
                 regexYangVRRPipAddress = re.compile(r'.*/vrrp/(?P<VVRPgrp>.*)/ipv4/address')
                 optionalVRRPvariales = []
                 # Until here
@@ -769,6 +770,7 @@ class viptelaModule(object):
                     VRRPtimer = regexYangVRRPtimer.findall(column['property'])
                     VRRPtrackPrefix = regexYangVRRPtrackPrefix.findall(column['property'])
                     VRRPipAddress = regexYangVRRPipAddress.findall(column['property'])
+                    VRRPtrackOMP = regexYangVRRPtrackOMP.findall(column['property'])
                     if VRRPpriority:
                         if VRRPpriority[0] in optionalVRRPvariales:
                             match = regex.findall(column['title'])
@@ -793,6 +795,12 @@ class viptelaModule(object):
                             if match:
                                 variable = match[-1]
                                 return_dict[variable] = column['property']
+                    elif VRRPtrackOMP:
+                        if VRRPipAddress[0] in optionalVRRPvariales:
+                            match = regex.findall(column['title'])
+                            if match:
+                                variable = match[-1]
+                                return_dict[variable] = column['property']                    
                     # Until here
 
                     # Same logic for logging optional variables
