@@ -96,7 +96,7 @@ def run_module():
                                 response = viptela.request('/dataservice/template/lock/{0}'.format(process_id), method='DELETE')
                                 viptela.result['lock_response'] = response.json
                             else:
-                                viptela.fail_json(msg="Did not get a process id when updating policy list")
+                                viptela.warn_json(msg="Did not get a process id when updating policy list")
             else:
                 if not module.check_mode:
                     viptela.request('/dataservice/template/policy/list/{0}/'.format(list['type'].lower()),
