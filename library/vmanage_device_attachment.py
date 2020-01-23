@@ -163,7 +163,7 @@ def run_module():
                 # mismatch.  It might be indicative of a problem...
                 for property in device_template_variables:
                     if str(device_template_variables[property]) != str(current_variables[property]):
-                        break
+                        viptela.result['changed'] = True
         else:
             viptela.result['changed'] = True
 
