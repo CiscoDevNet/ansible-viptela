@@ -88,15 +88,16 @@ def run_module():
                                 if viptela.params['push']:
                                     # If told to push out the change, we need to reattach each template affected by the change
                                     for template_id in response.json['masterTemplatesAffected']:
-                                        action_id = viptela.reattach_device_template(template_id)
+                                        action_id = viptela.reattach_device_template(template_id, process_id=process_id)
 
                                 # Delete the lock on the policy list
                                 # FIXME: The list does not seem to update when we unlock too soon, so I think that we need
                                 # to wait for the attachment, but need to understand this better.
-                                response = viptela.request('/dataservice/template/lock/{0}'.format(process_id), method='DELETE')
-                                viptela.result['lock_response'] = response.json
+                                # response = viptela.request('/dataservice/template/lock/{0}'.format(process_id), method='DELETE')
+                                # viptela.result['lock_response'] = response.json
                             else:
-                                viptela.fail_json(msg="Did not get a process id when updating policy list")
+                                if viptela.params['push']:
+                                    viptela.fail_json(msg="Cannot push changes: Did not get a process id when updating policy list")
             else:
                 if not module.check_mode:
                     viptela.request('/dataservice/template/policy/list/{0}/'.format(list['type'].lower()),

@@ -914,7 +914,7 @@ class viptelaModule(object):
             self.fail_json(msg='Did not get action ID after pushing certificates.')
         return response.json['id']
 
-    def reattach_device_template(self, template_id):
+    def reattach_device_template(self, template_id, process_id=None):
         device_list = self.get_template_attachments(template_id, key='uuid')
         # First, we need to get the input to feed to the re-attach
         payload = {
@@ -932,8 +932,7 @@ class viptelaModule(object):
                         {
                             "templateId": template_id,
                             "device": response.json['data'],
-                            "isEdited": "true",
-                            "isMasterEdited": "false"
+                            "isEdited": "true"
                         }
                     ]
             }
@@ -943,6 +942,10 @@ class viptelaModule(object):
             else:
                 self.fail_json(
                     msg='Did not get action ID after attaching device to template.')
+
+            # if process_id:
+            #    self.request('/dataservice/template/lock/{0}'.format(process_id), method='DELETE')
+
         else:
             self.fail_json(msg="Could not retrieve input for template {0}".format(template_id))
         return response.json['id']
