@@ -10,5 +10,5 @@
   ignore_errors: True
   vars:
     # actual_result: "{{ True if nping_results.json.lossPercentage <= 25 else False }}"
-    actual_result: "{{ True if ping_rx else False }}"
+    actual_result: "{{ True if ping_rx != '0' else False }}"
     expected_result: "{{ ping_pass }}"
