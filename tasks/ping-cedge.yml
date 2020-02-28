@@ -6,13 +6,14 @@
     source: "{{ ping_src_ip }}"
     dest: "{{ ping_dst_ip }}"
     vrf: "{{ ping_vpn }}"
+    state: "{{ 'present' if ping_pass else 'absent' }}"
   connection: network_cli
   delegate_to: localhost
   register: ping
 
 - set_fact:
     ping_rx: "{{ ping.packets_rx }}"
-    ping_tx: "{{ ping.packets_rx }}"
+    ping_tx: "{{ ping.packets_tx }}"
     ping_loss: "{{ ping.packet_loss }}"
     ping_rtt_min: "{{ ping.rtt.min }}"
     ping_rtt_max: "{{ ping.rtt.max }}"

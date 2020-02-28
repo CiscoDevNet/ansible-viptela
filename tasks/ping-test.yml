@@ -7,8 +7,7 @@
 - debug:
     msg: "{{ ping_vedge }}(VPN {{ping_vpn}}) => {{ ping_dst_ip }}: {{ ping_rx }}/{{ ping_tx }}, {{ ping_loss }} loss, Pass(actual/expected) {{ actual_result }}/{{ expected_result }}"
   failed_when: actual_result != expected_result
-  ignore_errors: True
+  ignore_errors: False
   vars:
-    # actual_result: "{{ True if nping_results.json.lossPercentage <= 25 else False }}"
-    actual_result: "{{ True if ping_rx else False }}"
+    actual_result: "{{ True if ping_loss < '100' else False }}"
     expected_result: "{{ ping_pass }}"
