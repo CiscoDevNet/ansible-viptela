@@ -18,9 +18,9 @@ def run_module():
                          aggregate=dict(type='list'),
                          name=dict(type='str'),
                          description = dict(type = 'str'),
-                         type = dict(type ='str', required = True, choices= ['color', 'vpn', 'site', 'app',
+                         type = dict(type ='str', required = False, choices= ['all', 'color', 'vpn', 'site', 'app',
                             'dataprefix', 'prefix', 'aspath', 'class', 'community', 'extcommunity', 'mirror', 'tloc',
-                            'sla', 'policer', 'ipprefixall', 'dataprefixall']),
+                            'sla', 'policer', 'ipprefixall', 'dataprefixall'], default='all'),
                          entries = dict(type ='list'),
                          push=dict(type='bool', default=False),
                          force=dict(type='bool', default=False)
