@@ -13,14 +13,13 @@ from ansible.module_utils.viptela import viptelaModule, viptela_argument_spec
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
+    # we only support the 'data' type currently, it will be fixed when we migrate to the SDK
     argument_spec = viptela_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'present'], default='present'),
                          aggregate=dict(type='list'),
                          name=dict(type='str'),
                          description = dict(type = 'str'),
-                         type = dict(type ='str', required = True, choices= ['cflowd', 'dnssecurity', 'control',
-                                'hubandspoke', 'acl', 'vpnmembershipgroup', 'mesh', 'rewriterule', 'data',
-                                'rewriterule', 'aclv6']),
+                         type = dict(type ='str', required = True, choices= ['data']),
                          sequences = dict(type ='list'),
                          default_action = dict(type ='dict', alias='defaultAction'),
     )
