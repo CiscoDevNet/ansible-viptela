@@ -37,20 +37,17 @@ def run_module():
     # response = viptela.request('/dataservice/template/policy/vsmart')
     # response_json = response.json()
     # vsmart_policies = response_json['data']
-    policy_definitions = {}
+    policy_definitions = []
     policy_list_dict = viptela.get_policy_list_dict('all', key_name='listId')
     for list_type in viptela.POLICY_DEFINITION_TYPES:
         definition_list = viptela.get_policy_definition_list(list_type)
-        definition_detail_list = []
         for definition in definition_list:
             definition_detail = viptela.get_policy_definition(list_type, definition['definitionId'])
             for sequence in definition_detail['sequences']:
                 for entry in sequence['match']['entries']:
                     entry['listName'] = policy_list_dict[entry['ref']]['name']
                     entry['listType'] = policy_list_dict[entry['ref']]['type']
-            definition_detail_list.append(definition_detail)
-        policy_definitions[list_type] = definition_detail_list
-
+            policy_definitions.append(definition_detail)
 
     viptela.result['policy_definitions'] = policy_definitions
 
