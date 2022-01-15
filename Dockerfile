@@ -13,7 +13,7 @@ RUN echo "===> Installing GCC ****" && \
     echo "**** Installing pip ****" && \
     python3 -m ensurepip && \
     rm -r /usr/lib/python*/ensurepip && \
-    pip3 install --no-cache --upgrade pip setuptools wheel && \
+    pip3 install --no-cache-dir --upgrade pip setuptools wheel && \
     if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
     \
     \
@@ -22,11 +22,11 @@ RUN echo "===> Installing GCC ****" && \
     \
     \
     echo "===> Installing PIP Requirements..."  && \
-    pip install -r /tmp/requirements.txt
+    pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY files/virl2_client-0.8.2+b4d055d25-py3-none-any.whl /tmp/virl2_client-0.8.2+b4d055d25-py3-none-any.whl
 RUN echo "===> Installing VIRL Client..."  && \
-    pip install /tmp/virl2_client-0.8.2+b4d055d25-py3-none-any.whl
+    pip install --no-cache-dir /tmp/virl2_client-0.8.2+b4d055d25-py3-none-any.whl
 
 RUN echo "===> Installing Terraform ****" && \
     apk --update add wget unzip cdrkit curl && \
